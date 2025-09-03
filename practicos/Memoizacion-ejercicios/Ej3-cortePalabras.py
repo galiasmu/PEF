@@ -18,7 +18,6 @@ def word_break(s, word_dict, memo=None):
     return False
 
 
-# Ejemplo de uso
 s = "applepenapple"
 word_dict = ["apple", "pen"]
 print(word_break(s, word_dict))  # True (porque "apple pen apple")
