@@ -19,7 +19,7 @@ Este repositorio contiene ejercicios, parciales y prácticos realizados durante 
 ---
 
 ## Uso de repositorio
-
+Se requiere Python 3, especificamente 3.13, aunque deberia funcionar correctamente con cualquier version de Python3
 1. Clonar el repositorio:
    ```bash
    git clone https://github.com/galiasmu/PEF.git
