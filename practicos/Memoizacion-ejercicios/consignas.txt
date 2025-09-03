@@ -1,0 +1,15 @@
+1.	Dada una cuadrícula de tamaño m x n, escribí una función que devuelva la cantidad de formas de llegar desde la esquina superior izquierda (0,0) a la inferior derecha (m-1,n-1), moviendo solo hacia la derecha o hacia abajo.
+2.	Dada una lista de enteros positivos y un número objetivo, escribí una función que determine si existe un subconjunto cuya suma sea exactamente el objetivo.
+Explicación breve:
+
+La clave de memoización es (i, target) → posición actual + objetivo restante.
+
+Si el target llega a 0 → existe un subconjunto.
+
+Si me paso de la lista o target < 0 → no hay solución.
+
+En cada paso decido incluir o no incluir el número actual.
+
+3.	Dado un string s y una lista de palabras válidas, determiná si s se puede formar usando solo palabras de la lista, reutilizándolas si es necesario.
+4.	Dado un valor total y una lista de monedas, escribí una función que devuelva cuántas combinaciones distintas de monedas suman ese total.
+
