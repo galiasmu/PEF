@@ -1,0 +1,10 @@
+1 – Enunciado: Se cuenta con una lista de 1 millón de números enteros únicos y se necesita comprobar si un número dado está en la colección
+miles de veces. Eligir una estructura de datos que minimice el tiempo total de las búsquedas.
+
+2 -  Enunciado: Se necesita almacenar datos de 1 millón de usuarios y poder acceder rápidamente al usuario n° 500,000 sin recorrer la colección.
+
+3- Enunciado: Se quiere almacenar datos de productos en el orden en el que llegan, pero también poder buscar un producto por su código en O(1).
+
+4- Enunciado: Se necesita procesar solicitudes en el orden en que llegan, quitando siempre la primera en O(1).
+
+5- Enunciado: Se tiene una secuencia de eventos y se quiere eliminar duplicados pero manteniendo el orden original.

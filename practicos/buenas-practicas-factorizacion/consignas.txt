@@ -1,0 +1,76 @@
+🔹 Ejercicio 1: Agregar comentarios y docstrings
+
+Código inicial:
+
+def area(r):
+ return 3.14*r*r
+
+
+👉 Tarea: Documentar correctamente la función con docstring y comentarios siguiendo PEP 8.
+
+🔹 Ejercicio 2: Aplicar PEP 8 y verificar con flake8
+
+Código inicial (malo):
+
+def Suma(a,b):return a+b
+print(Suma(3,4))
+
+
+👉 Tarea: Corregir con PEP 8 y usar flake8 para comprobar.
+
+🔹 Ejercicio 3: Refactorización (duplicación de código)
+
+Código inicial:
+
+def area_rectangulo(a, b):
+    return a * b
+
+def area_cuadrado(l):
+    return l * l
+
+👉 Tarea: Refactorizar eliminando duplicación.
+
+4 Refactorizar en java:
+
+Código inicial:
+
+public class Reporte {
+    public void generarReporte(String usuario, int ventas, int gastos, int ganancias) {
+        System.out.println("Usuario: " + usuario);
+        System.out.println("Ventas: " + ventas);
+        System.out.println("Gastos: " + gastos);
+        System.out.println("Ganancias: " + ganancias);
+        int balance = ventas - gastos;
+        if (balance > 0) {
+            System.out.println("Balance positivo");
+        } else {
+            System.out.println("Balance negativo");
+        }
+    }
+}
+
+
+5 Refactorizar en Java
+Código inicial:
+
+public class Circulo {
+    public double area(double radio) {
+        return 3.14 * radio * radio;
+    }
+}
+
+6 Refactorizar en Java
+Código inicial:
+
+public class Empleado {
+    public void mostrarEmpleado(String nombre, int edad) {
+        System.out.println("Nombre: " + nombre);
+        System.out.println("Edad: " + edad);
+    }
+
+    public void mostrarCliente(String nombre, int edad) {
+        System.out.println("Nombre: " + nombre);
+        System.out.println("Edad: " + edad);
+    }
+}
+
