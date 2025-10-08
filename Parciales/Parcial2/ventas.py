@@ -9,6 +9,7 @@ import csv
 import random
 from dataclasses import dataclass
 from typing import Dict, Iterable, Tuple, Optional
+#from memory_profiler import profile
 
 try:
     import pandas as _pd  # opcional
@@ -65,13 +66,12 @@ def _iter_csv_filas(nombre_archivo: str) -> Iterable[Tuple[int, str, float, int]
                 int(row["Cantidad"]),
             )
 
-
+@profile  # descomenta para memory_profiler/line_profiler
 def analizar_ventas_streaming(nombre_archivo: str) -> VentasMetrics:
     cantidades_por_producto: Dict[str, int] = {}
     suma_ventas = 0.0
     n = 0
 
-    # @profile  # descomenta para memory_profiler/line_profiler
     for (_id, producto, precio, cantidad) in _iter_csv_filas(nombre_archivo):
         total = precio * cantidad
         suma_ventas += total
@@ -92,7 +92,7 @@ def analizar_ventas_streaming(nombre_archivo: str) -> VentasMetrics:
         num_registros=n,
     )
 
-
+@profile
 def analizar_ventas_pandas(nombre_archivo: str, chunksize: int = 50_000) -> VentasMetrics:
     if _pd is None:
         raise RuntimeError("pandas no está disponible en el entorno.")
@@ -101,7 +101,6 @@ def analizar_ventas_pandas(nombre_archivo: str, chunksize: int = 50_000) -> Vent
     n = 0
     cantidades_por_producto: Dict[str, int] = {}
 
-    # @profile
     for chunk in _pd.read_csv(nombre_archivo, chunksize=chunksize):
         chunk["Venta_Total"] = chunk["Precio_Unitario"] * chunk["Cantidad"]
         suma_ventas += float(chunk["Venta_Total"].sum())
