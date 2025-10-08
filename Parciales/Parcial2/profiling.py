@@ -1,30 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-profiling.py
-------------
-Scripts auxiliares para medir rendimiento y memoria.
-
-Uso sugerido:
-- cProfile (guardar y ver stats):
-    python -m cProfile -o profile.out ventas.py analizar ventas.csv
-    python - <<'PY'
-import pstats
-p = pstats.Stats('profile.out')
-p.sort_stats('cumtime').print_stats(20)
-PY
-
-- line_profiler (kernprof):
-    pip install line_profiler
-    kernprof -l -v ventas.py analizar ventas.csv
-
-- memory_profiler:
-    pip install memory_profiler
-    python -m memory_profiler ventas.py analizar ventas.csv
-
-- timeit (micro-bench local):
-    python profiling.py --timeit
-"""
 import argparse
 import timeit
 

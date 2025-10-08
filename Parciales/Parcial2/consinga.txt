@@ -1,0 +1,13 @@
+Enunciados de Proyectos – Parcial 2
+🔹 Proyecto 1 – Procesamiento de Datos de Ventas --Asmuzi - Gaby
+Desarrollar un programa que:
+Lea un archivo CSV con 10.000 registros de ventas (puede ser generado por el alumno).
+Calcule métricas: ventas totales, promedio, producto más vendido.
+Optimizar el código:
+Detectar y eliminar código redundante.
+Aplicar batching (procesar los datos en bloques en lugar de cargar todo en memoria).
+Medir rendimiento con cProfile y line_profiler.
+Analizar consumo de memoria con memory_profiler.
+Hacer pruebas de rendimiento con timeit.
+Escribir tests unitarios con pytest para validar las funciones principales.
+Entregar una versión final refactorizada y bien documentada (PEP8, docstrings).

@@ -1,18 +1,12 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-ventas.py
----------
-Proyecto 1 – Procesamiento de Datos de Ventas.
-"""
 import csv
 import random
 from dataclasses import dataclass
 from typing import Dict, Iterable, Tuple, Optional
 #from memory_profiler import profile
+import cProfile
 
 try:
-    import pandas as _pd  # opcional
+    import pandas as _pd
 except Exception:
     _pd = None
 
@@ -66,7 +60,7 @@ def _iter_csv_filas(nombre_archivo: str) -> Iterable[Tuple[int, str, float, int]
                 int(row["Cantidad"]),
             )
 
-@profile  # descomenta para memory_profiler/line_profiler
+#@profile
 def analizar_ventas_streaming(nombre_archivo: str) -> VentasMetrics:
     cantidades_por_producto: Dict[str, int] = {}
     suma_ventas = 0.0
@@ -92,7 +86,7 @@ def analizar_ventas_streaming(nombre_archivo: str) -> VentasMetrics:
         num_registros=n,
     )
 
-@profile
+#@profile
 def analizar_ventas_pandas(nombre_archivo: str, chunksize: int = 50_000) -> VentasMetrics:
     if _pd is None:
         raise RuntimeError("pandas no está disponible en el entorno.")
@@ -156,7 +150,7 @@ def main():
     args = _parse_args()
     if args.cmd == "generar":
         ruta = generar_csv_ventas(args.archivo, args.n, seed=args.seed)
-        print(f"✅ Archivo '{ruta}' con {args.n:,} registros generado.")
+        print(f" Archivo '{ruta}' con {args.n:,} registros generado.")
     elif args.cmd == "analizar":
         if args.modo == "stream":
             metrics = analizar_ventas_streaming(args.archivo)
