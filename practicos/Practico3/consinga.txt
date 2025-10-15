@@ -1,0 +1,79 @@
+Enunciado 1:
+Un programa concatena cadenas dentro de un bucle con +. Esto es ineficiente porque crea muchos objetos intermedios. Se solicita optimizarlo.
+
+Código inicial:
+
+def concatenar(lista):
+    resultado = ""
+    for palabra in lista:
+        resultado += palabra
+    return resultado
+
+
+Enunciado 2:
+Mide con cProfile qué función es más lenta: generar una lista con comprensión o con un bucle.
+
+import cProfile
+
+def con_bucle(n):
+    resultado = []
+    for i in range(n):
+        resultado.append(i*i)
+    return resultado
+
+def con_comprension(n):
+    return [i*i for i in range(n)]
+
+cProfile.run("con_bucle(10**6)")
+cProfile.run("con_comprension(10**6)")
+
+Enunciado 3:
+Perfila línea por línea la siguiente función para detectar el cuello de botella y optimiza el código:
+
+@profile
+def procesar(lista):
+    resultado = []
+    for x in lista:
+        if x % 2 == 0:
+            resultado.append(x**2)
+    return resultado
+
+
+Ejecución:
+kernprof -l -v script.py
+
+Enunciado 4:
+Analiza el consumo de memoria de esta función y reduce el uso innecesario:
+
+from memory_profiler import profile
+
+@profile
+def crear_listas():
+    a = [i for i in range(10**6)]
+    b = [i*2 for i in range(10**6)]
+    return a, b
+
+Enunciado 5:
+Compara el tiempo de ejecución de este código en CPython y en PyPy e indica el resultado:
+
+def fibonacci(n):
+    a, b = 0, 1
+    for _ in range(n):
+        a, b = b, a+b
+    return a
+
+import time
+inicio = time.time()
+print(fibonacci(10**6))
+print("Tiempo:", time.time() - inicio)
+
+Enunciado 6:
+Convierte esta función en Cython para acelerar su ejecución:
+
+def suma(n):
+    total = 0
+    for i in range(n):
+        total += i
+    return total
+
+

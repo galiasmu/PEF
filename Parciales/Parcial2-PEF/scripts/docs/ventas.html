@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
+<meta name="generator" content="pdoc3 0.11.6">
+<title>ventas API documentation</title>
+<meta name="description" content="ventas.py
+Proyecto 1 – Procesamiento de Datos de Ventas …">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/sanitize.min.css" integrity="sha512-y1dtMcuvtTMJc1yPgEqF0ZjQbhnc/bFhyvIyVNb9Zk5mIGtqVaAB1Ttl28su8AvFMOY0EwRbAe+HCLqj6W7/KA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/10up-sanitize.css/13.0.0/typography.min.css" integrity="sha512-Y1DYSb995BAfxobCkKepB1BqJJTPrOp3zPL74AWFugHHmmdcvO+C48WLrUOlhGMc0QG7AE3f7gmvvcrmX2fDoA==" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css" crossorigin>
+<style>:root{--highlight-color:#fe9}.flex{display:flex !important}body{line-height:1.5em}#content{padding:20px}#sidebar{padding:1.5em;overflow:hidden}#sidebar > *:last-child{margin-bottom:2cm}.http-server-breadcrumbs{font-size:130%;margin:0 0 15px 0}#footer{font-size:.75em;padding:5px 30px;border-top:1px solid #ddd;text-align:right}#footer p{margin:0 0 0 1em;display:inline-block}#footer p:last-child{margin-right:30px}h1,h2,h3,h4,h5{font-weight:300}h1{font-size:2.5em;line-height:1.1em}h2{font-size:1.75em;margin:2em 0 .50em 0}h3{font-size:1.4em;margin:1.6em 0 .7em 0}h4{margin:0;font-size:105%}h1:target,h2:target,h3:target,h4:target,h5:target,h6:target{background:var(--highlight-color);padding:.2em 0}a{color:#058;text-decoration:none;transition:color .2s ease-in-out}a:visited{color:#503}a:hover{color:#b62}.title code{font-weight:bold}h2[id^="header-"]{margin-top:2em}.ident{color:#900;font-weight:bold}pre code{font-size:.8em;line-height:1.4em;padding:1em;display:block}code{background:#f3f3f3;font-family:"DejaVu Sans Mono",monospace;padding:1px 4px;overflow-wrap:break-word}h1 code{background:transparent}pre{border-top:1px solid #ccc;border-bottom:1px solid #ccc;margin:1em 0}#http-server-module-list{display:flex;flex-flow:column}#http-server-module-list div{display:flex}#http-server-module-list dt{min-width:10%}#http-server-module-list p{margin-top:0}.toc ul,#index{list-style-type:none;margin:0;padding:0}#index code{background:transparent}#index h3{border-bottom:1px solid #ddd}#index ul{padding:0}#index h4{margin-top:.6em;font-weight:bold}@media (min-width:200ex){#index .two-column{column-count:2}}@media (min-width:300ex){#index .two-column{column-count:3}}dl{margin-bottom:2em}dl dl:last-child{margin-bottom:4em}dd{margin:0 0 1em 3em}#header-classes + dl > dd{margin-bottom:3em}dd dd{margin-left:2em}dd p{margin:10px 0}.name{background:#eee;font-size:.85em;padding:5px 10px;display:inline-block;min-width:40%}.name:hover{background:#e0e0e0}dt:target .name{background:var(--highlight-color)}.name > span:first-child{white-space:nowrap}.name.class > span:nth-child(2){margin-left:.4em}.inherited{color:#999;border-left:5px solid #eee;padding-left:1em}.inheritance em{font-style:normal;font-weight:bold}.desc h2{font-weight:400;font-size:1.25em}.desc h3{font-size:1em}.desc dt code{background:inherit}.source > summary,.git-link-div{color:#666;text-align:right;font-weight:400;font-size:.8em;text-transform:uppercase}.source summary > *{white-space:nowrap;cursor:pointer}.git-link{color:inherit;margin-left:1em}.source pre{max-height:500px;overflow:auto;margin:0}.source pre code{font-size:12px;overflow:visible;min-width:max-content}.hlist{list-style:none}.hlist li{display:inline}.hlist li:after{content:',\2002'}.hlist li:last-child:after{content:none}.hlist .hlist{display:inline;padding-left:1em}img{max-width:100%}td{padding:0 .5em}.admonition{padding:.1em 1em;margin:1em 0}.admonition-title{font-weight:bold}.admonition.note,.admonition.info,.admonition.important{background:#aef}.admonition.todo,.admonition.versionadded,.admonition.tip,.admonition.hint{background:#dfd}.admonition.warning,.admonition.versionchanged,.admonition.deprecated{background:#fd4}.admonition.error,.admonition.danger,.admonition.caution{background:lightpink}</style>
+<style media="screen and (min-width: 700px)">@media screen and (min-width:700px){#sidebar{width:30%;height:100vh;overflow:auto;position:sticky;top:0}#content{width:70%;max-width:100ch;padding:3em 4em;border-left:1px solid #ddd}pre code{font-size:1em}.name{font-size:1em}main{display:flex;flex-direction:row-reverse;justify-content:flex-end}.toc ul ul,#index ul ul{padding-left:1em}.toc > ul > li{margin-top:.5em}}</style>
+<style media="print">@media print{#sidebar h1{page-break-before:always}.source{display:none}}@media print{*{background:transparent !important;color:#000 !important;box-shadow:none !important;text-shadow:none !important}a[href]:after{content:" (" attr(href) ")";font-size:90%}a[href][title]:after{content:none}abbr[title]:after{content:" (" attr(title) ")"}.ir a:after,a[href^="javascript:"]:after,a[href^="#"]:after{content:""}pre,blockquote{border:1px solid #999;page-break-inside:avoid}thead{display:table-header-group}tr,img{page-break-inside:avoid}img{max-width:100% !important}@page{margin:0.5cm}p,h2,h3{orphans:3;widows:3}h1,h2,h3,h4,h5,h6{page-break-after:avoid}}</style>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" integrity="sha512-D9gUyxqja7hBtkWpPWGt9wfbfaMGVt9gnyCvYa+jojwwPHLCzUm5i8rpk7vD7wNee9bA35eYIjobYPaQuKS1MQ==" crossorigin></script>
+<script>window.addEventListener('DOMContentLoaded', () => {
+hljs.configure({languages: ['bash', 'css', 'diff', 'graphql', 'ini', 'javascript', 'json', 'plaintext', 'python', 'python-repl', 'rust', 'shell', 'sql', 'typescript', 'xml', 'yaml']});
+hljs.highlightAll();
+/* Collapse source docstrings */
+setTimeout(() => {
+[...document.querySelectorAll('.hljs.language-python > .hljs-string')]
+.filter(el => el.innerHTML.length > 200 && ['"""', "'''"].includes(el.innerHTML.substring(0, 3)))
+.forEach(el => {
+let d = document.createElement('details');
+d.classList.add('hljs-string');
+d.innerHTML = '<summary>"""</summary>' + el.innerHTML.substring(3);
+el.replaceWith(d);
+});
+}, 100);
+})</script>
+</head>
+<body>
+<main>
+<article id="content">
+<header>
+<h1 class="title">Module <code>ventas</code></h1>
+</header>
+<section id="section-intro">
+<h2 id="ventaspy">ventas.py</h2>
+<p>Proyecto 1 – Procesamiento de Datos de Ventas.</p>
+<p>Este módulo implementa un sistema completo de generación y análisis de datos
+de ventas desde archivos CSV. Proporciona dos estrategias de procesamiento
+optimizadas: streaming (línea por línea) y batching con pandas (por bloques).</p>
+<p>Módulos principales:
+- generar_csv_ventas: Genera archivos CSV sintéticos con datos aleatorios
+- analizar_ventas_streaming: Análisis eficiente con memoria constante O(1)
+- analizar_ventas_pandas: Análisis por bloques con operaciones vectorizadas</p>
+<p>Fecha: Octubre 2025</p>
+</section>
+<section>
+</section>
+<section>
+</section>
+<section>
+<h2 class="section-title" id="header-functions">Functions</h2>
+<dl>
+<dt id="ventas.analizar_ventas_pandas"><code class="name flex">
+<span>def <span class="ident">analizar_ventas_pandas</span></span>(<span>nombre_archivo: str, chunksize: int = 50000) ‑> <a title="ventas.VentasMetrics" href="#ventas.VentasMetrics">VentasMetrics</a></span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@profile
+def analizar_ventas_pandas(nombre_archivo: str, chunksize: int = 50_000) -&gt; VentasMetrics:
+    &#34;&#34;&#34;
+    Analiza ventas usando estrategia de batching con pandas.
+
+    Procesa el archivo CSV en bloques (chunks) del tamaño especificado,
+    aprovechando las operaciones vectorizadas de NumPy para mejor rendimiento.
+    La memoria usada es proporcional al chunksize, no al tamaño total del archivo.
+
+    Args:
+        nombre_archivo (str): Ruta del archivo CSV a analizar
+        chunksize (int): Número de filas a procesar por bloque.
+            Default: 50,000. Valores mayores usan más memoria pero pueden
+            ser más rápidos. Valores menores usan menos memoria pero más
+            iteraciones.
+
+    Returns:
+        VentasMetrics: Objeto con todas las métricas calculadas
+
+    Raises:
+        RuntimeError: Si pandas no está instalado
+        FileNotFoundError: Si el archivo no existe
+        pd.errors.ParserError: Si el CSV tiene formato inválido
+
+    Note:
+        Ventajas de esta estrategia:
+        - Más rápido que streaming para operaciones complejas
+        - Operaciones vectorizadas (NumPy en C)
+        - Métodos built-in de pandas (groupby, pivot, merge)
+
+        Desventajas:
+        - Usa más memoria (proporcional al chunksize)
+        - Requiere pandas + numpy instalados
+        - Overhead de conversión a DataFrame
+
+    Warning:
+        Si chunksize es muy grande y el archivo es enorme, puede quedarse
+        sin memoria. Ajusta chunksize según la RAM disponible.
+    &#34;&#34;&#34;
+    if _pd is None:
+        raise RuntimeError(&#34;pandas no está disponible en el entorno.&#34;)
+
+    suma_ventas = 0.0
+    n = 0
+    cantidades_por_producto: Dict[str, int] = {}
+
+    for chunk in _pd.read_csv(nombre_archivo, chunksize=chunksize):
+        chunk[&#34;Venta_Total&#34;] = chunk[&#34;Precio_Unitario&#34;] * chunk[&#34;Cantidad&#34;]
+        suma_ventas += float(chunk[&#34;Venta_Total&#34;].sum())
+        n += int(len(chunk))
+        cantidades_chunk = chunk.groupby(&#34;Producto&#34;)[&#34;Cantidad&#34;].sum().to_dict()
+        for prod, cnt in cantidades_chunk.items():
+            cantidades_por_producto[prod] = cantidades_por_producto.get(prod, 0) + int(cnt)
+
+    if n == 0:
+        return VentasMetrics(0.0, 0.0, &#34;&#34;, 0, 0)
+
+    producto_top, cant_top = max(cantidades_por_producto.items(), key=lambda kv: kv[1])
+    promedio = suma_ventas / n
+
+    return VentasMetrics(
+        ventas_totales=round(suma_ventas, 2),
+        promedio_por_venta=round(promedio, 2),
+        producto_mas_vendido=producto_top,
+        cantidad_mas_vendida=int(cant_top),
+        num_registros=n,
+    )</code></pre>
+</details>
+<div class="desc"><p>Analiza ventas usando estrategia de batching con pandas.</p>
+<p>Procesa el archivo CSV en bloques (chunks) del tamaño especificado,
+aprovechando las operaciones vectorizadas de NumPy para mejor rendimiento.
+La memoria usada es proporcional al chunksize, no al tamaño total del archivo.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>nombre_archivo</code></strong> :&ensp;<code>str</code></dt>
+<dd>Ruta del archivo CSV a analizar</dd>
+<dt><strong><code>chunksize</code></strong> :&ensp;<code>int</code></dt>
+<dd>Número de filas a procesar por bloque.
+Default: 50,000. Valores mayores usan más memoria pero pueden
+ser más rápidos. Valores menores usan menos memoria pero más
+iteraciones.</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="ventas.VentasMetrics" href="#ventas.VentasMetrics">VentasMetrics</a></code></dt>
+<dd>Objeto con todas las métricas calculadas</dd>
+</dl>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>RuntimeError</code></dt>
+<dd>Si pandas no está instalado</dd>
+<dt><code>FileNotFoundError</code></dt>
+<dd>Si el archivo no existe</dd>
+<dt><code>pd.errors.ParserError</code></dt>
+<dd>Si el CSV tiene formato inválido</dd>
+</dl>
+<h2 id="note">Note</h2>
+<p>Ventajas de esta estrategia:
+- Más rápido que streaming para operaciones complejas
+- Operaciones vectorizadas (NumPy en C)
+- Métodos built-in de pandas (groupby, pivot, merge)</p>
+<p>Desventajas:
+- Usa más memoria (proporcional al chunksize)
+- Requiere pandas + numpy instalados
+- Overhead de conversión a DataFrame</p>
+<h2 id="warning">Warning</h2>
+<p>Si chunksize es muy grande y el archivo es enorme, puede quedarse
+sin memoria. Ajusta chunksize según la RAM disponible.</p></div>
+</dd>
+<dt id="ventas.analizar_ventas_streaming"><code class="name flex">
+<span>def <span class="ident">analizar_ventas_streaming</span></span>(<span>nombre_archivo: str) ‑> <a title="ventas.VentasMetrics" href="#ventas.VentasMetrics">VentasMetrics</a></span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@profile
+def analizar_ventas_streaming(nombre_archivo: str) -&gt; VentasMetrics:
+    &#34;&#34;&#34;
+    Analiza ventas usando estrategia de streaming (línea por línea).
+
+    Procesa el archivo CSV de forma iterativa sin cargar todo el contenido
+    en memoria. Esta estrategia tiene complejidad temporal O(n) y complejidad
+    espacial O(1) respecto al tamaño del archivo, usando solo memoria para
+    contadores y agregaciones.
+
+    Args:
+        nombre_archivo (str): Ruta del archivo CSV a analizar
+
+    Returns:
+        VentasMetrics: Objeto con todas las métricas calculadas
+
+    Raises:
+        FileNotFoundError: Si el archivo no existe
+        ValueError: Si el CSV tiene formato inválido
+
+    Note:
+        Ventajas de esta estrategia:
+        - Memoria constante (~50 MB) sin importar tamaño del archivo
+        - Puede procesar archivos de 1 GB, 10 GB o más
+        - Sin dependencias externas (solo biblioteca estándar)
+
+        Desventajas:
+        - Más lento que pandas para operaciones complejas
+        - Operaciones no vectorizadas
+    &#34;&#34;&#34;
+    cantidades_por_producto: Dict[str, int] = {}
+    suma_ventas = 0.0
+    n = 0
+
+    for (_id, producto, precio, cantidad) in _iter_csv_filas(nombre_archivo):
+        total = precio * cantidad
+        suma_ventas += total
+        n += 1
+        cantidades_por_producto[producto] = cantidades_por_producto.get(producto, 0) + cantidad
+
+    if n == 0:
+        return VentasMetrics(0.0, 0.0, &#34;&#34;, 0, 0)
+
+    producto_top, cant_top = max(cantidades_por_producto.items(), key=lambda kv: kv[1])
+    promedio = suma_ventas / n
+
+    return VentasMetrics(
+        ventas_totales=round(suma_ventas, 2),
+        promedio_por_venta=round(promedio, 2),
+        producto_mas_vendido=producto_top,
+        cantidad_mas_vendida=int(cant_top),
+        num_registros=n,
+    )</code></pre>
+</details>
+<div class="desc"><p>Analiza ventas usando estrategia de streaming (línea por línea).</p>
+<p>Procesa el archivo CSV de forma iterativa sin cargar todo el contenido
+en memoria. Esta estrategia tiene complejidad temporal O(n) y complejidad
+espacial O(1) respecto al tamaño del archivo, usando solo memoria para
+contadores y agregaciones.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>nombre_archivo</code></strong> :&ensp;<code>str</code></dt>
+<dd>Ruta del archivo CSV a analizar</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code><a title="ventas.VentasMetrics" href="#ventas.VentasMetrics">VentasMetrics</a></code></dt>
+<dd>Objeto con todas las métricas calculadas</dd>
+</dl>
+<h2 id="raises">Raises</h2>
+<dl>
+<dt><code>FileNotFoundError</code></dt>
+<dd>Si el archivo no existe</dd>
+<dt><code>ValueError</code></dt>
+<dd>Si el CSV tiene formato inválido</dd>
+</dl>
+<h2 id="note">Note</h2>
+<p>Ventajas de esta estrategia:
+- Memoria constante (~50 MB) sin importar tamaño del archivo
+- Puede procesar archivos de 1 GB, 10 GB o más
+- Sin dependencias externas (solo biblioteca estándar)</p>
+<p>Desventajas:
+- Más lento que pandas para operaciones complejas
+- Operaciones no vectorizadas</p></div>
+</dd>
+<dt id="ventas.generar_csv_ventas"><code class="name flex">
+<span>def <span class="ident">generar_csv_ventas</span></span>(<span>nombre_archivo: str = 'ventas.csv',<br>num_registros: int = 10000,<br>productos: Iterable[str] | None = None,<br>seed: int | None = 42) ‑> str</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def generar_csv_ventas(nombre_archivo: str = &#34;ventas.csv&#34;, num_registros: int = 10_000,
+                       productos: Optional[Iterable[str]] = None,
+                       seed: Optional[int] = 42) -&gt; str:
+    &#34;&#34;&#34;
+    Genera un archivo CSV con datos sintéticos de ventas.
+
+    Crea un archivo CSV con registros aleatorios de ventas que incluyen
+    ID, producto, precio unitario y cantidad. Los datos son reproducibles
+    si se especifica una semilla.
+
+    Args:
+        nombre_archivo (str): Ruta del archivo CSV a crear.
+            Default: &#34;ventas.csv&#34;
+        num_registros (int): Cantidad de registros a generar.
+            Default: 10,000
+        productos (Optional[Iterable[str]]): Lista de nombres de productos.
+            Si es None, usa PRODUCTOS_PREDETERMINADOS.
+        seed (Optional[int]): Semilla para generación aleatoria reproducible.
+            Si es None, los datos serán diferentes en cada ejecución.
+            Default: 42
+
+    Returns:
+        str: Ruta del archivo generado (mismo que nombre_archivo)
+
+    Note:
+        El archivo generado tiene las siguientes columnas:
+        - ID_Venta: Entero secuencial (1 a num_registros)
+        - Producto: Nombre del producto (string)
+        - Precio_Unitario: Float entre 20.50 y 850.99
+        - Cantidad: Entero entre 1 y 10
+    &#34;&#34;&#34;
+    if productos is None:
+        productos = PRODUCTOS_PREDETERMINADOS
+
+    if seed is not None:
+        random.seed(seed)
+
+    cabeceras = [&#34;ID_Venta&#34;, &#34;Producto&#34;, &#34;Precio_Unitario&#34;, &#34;Cantidad&#34;]
+
+    with open(nombre_archivo, mode=&#34;w&#34;, newline=&#34;&#34;, encoding=&#34;utf-8&#34;) as f:
+        writer = csv.writer(f)
+        writer.writerow(cabeceras)
+        for i in range(1, num_registros + 1):
+            producto = random.choice(list(productos))
+            precio = round(random.uniform(20.50, 850.99), 2)
+            cantidad = random.randint(1, 10)
+            writer.writerow([i, producto, precio, cantidad])
+
+    return nombre_archivo</code></pre>
+</details>
+<div class="desc"><p>Genera un archivo CSV con datos sintéticos de ventas.</p>
+<p>Crea un archivo CSV con registros aleatorios de ventas que incluyen
+ID, producto, precio unitario y cantidad. Los datos son reproducibles
+si se especifica una semilla.</p>
+<h2 id="args">Args</h2>
+<dl>
+<dt><strong><code>nombre_archivo</code></strong> :&ensp;<code>str</code></dt>
+<dd>Ruta del archivo CSV a crear.
+Default: "ventas.csv"</dd>
+<dt><strong><code>num_registros</code></strong> :&ensp;<code>int</code></dt>
+<dd>Cantidad de registros a generar.
+Default: 10,000</dd>
+<dt><strong><code>productos</code></strong> :&ensp;<code>Optional[Iterable[str]]</code></dt>
+<dd>Lista de nombres de productos.
+Si es None, usa PRODUCTOS_PREDETERMINADOS.</dd>
+<dt><strong><code>seed</code></strong> :&ensp;<code>Optional[int]</code></dt>
+<dd>Semilla para generación aleatoria reproducible.
+Si es None, los datos serán diferentes en cada ejecución.
+Default: 42</dd>
+</dl>
+<h2 id="returns">Returns</h2>
+<dl>
+<dt><code>str</code></dt>
+<dd>Ruta del archivo generado (mismo que nombre_archivo)</dd>
+</dl>
+<h2 id="note">Note</h2>
+<p>El archivo generado tiene las siguientes columnas:
+- ID_Venta: Entero secuencial (1 a num_registros)
+- Producto: Nombre del producto (string)
+- Precio_Unitario: Float entre 20.50 y 850.99
+- Cantidad: Entero entre 1 y 10</p></div>
+</dd>
+<dt id="ventas.main"><code class="name flex">
+<span>def <span class="ident">main</span></span>(<span>)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def main(): #pragma: no cover
+    args = _parse_args()
+    if args.cmd == &#34;generar&#34;:
+        ruta = generar_csv_ventas(args.archivo, args.n, seed=args.seed)
+        print(f&#34;✅ Archivo &#39;{ruta}&#39; con {args.n:,} registros generado.&#34;)
+    elif args.cmd == &#34;analizar&#34;:
+        if args.modo == &#34;stream&#34;:
+            metrics = analizar_ventas_streaming(args.archivo)
+        else:
+            metrics = analizar_ventas_pandas(args.archivo, chunksize=args.chunksize)
+        _imprimir_resultados(metrics)</code></pre>
+</details>
+<div class="desc"></div>
+</dd>
+</dl>
+</section>
+<section>
+<h2 class="section-title" id="header-classes">Classes</h2>
+<dl>
+<dt id="ventas.VentasMetrics"><code class="flex name class">
+<span>class <span class="ident">VentasMetrics</span></span>
+<span>(</span><span>ventas_totales: float,<br>promedio_por_venta: float,<br>producto_mas_vendido: str,<br>cantidad_mas_vendida: int,<br>num_registros: int)</span>
+</code></dt>
+<dd>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">@dataclass
+class VentasMetrics:
+    &#34;&#34;&#34;
+       Dataclass que encapsula las métricas calculadas del análisis de ventas.
+
+       Attributes:
+           ventas_totales (float): Suma total de todas las ventas (precio × cantidad)
+           promedio_por_venta (float): Valor promedio de cada transacción
+           producto_mas_vendido (str): Nombre del producto con más unidades vendidas
+           cantidad_mas_vendida (int): Número de unidades del producto más vendido
+           num_registros (int): Cantidad total de registros procesados
+       &#34;&#34;&#34;
+    ventas_totales: float
+    promedio_por_venta: float
+    producto_mas_vendido: str
+    cantidad_mas_vendida: int
+    num_registros: int</code></pre>
+</details>
+<div class="desc"><p>Dataclass que encapsula las métricas calculadas del análisis de ventas.</p>
+<h2 id="attributes">Attributes</h2>
+<dl>
+<dt><strong><code>ventas_totales</code></strong> :&ensp;<code>float</code></dt>
+<dd>Suma total de todas las ventas (precio × cantidad)</dd>
+<dt><strong><code>promedio_por_venta</code></strong> :&ensp;<code>float</code></dt>
+<dd>Valor promedio de cada transacción</dd>
+<dt><strong><code>producto_mas_vendido</code></strong> :&ensp;<code>str</code></dt>
+<dd>Nombre del producto con más unidades vendidas</dd>
+<dt><strong><code>cantidad_mas_vendida</code></strong> :&ensp;<code>int</code></dt>
+<dd>Número de unidades del producto más vendido</dd>
+<dt><strong><code>num_registros</code></strong> :&ensp;<code>int</code></dt>
+<dd>Cantidad total de registros procesados</dd>
+</dl></div>
+<h3>Instance variables</h3>
+<dl>
+<dt id="ventas.VentasMetrics.cantidad_mas_vendida"><code class="name">var <span class="ident">cantidad_mas_vendida</span> : int</code></dt>
+<dd>
+<div class="desc"><p>The type of the None singleton.</p></div>
+</dd>
+<dt id="ventas.VentasMetrics.num_registros"><code class="name">var <span class="ident">num_registros</span> : int</code></dt>
+<dd>
+<div class="desc"><p>The type of the None singleton.</p></div>
+</dd>
+<dt id="ventas.VentasMetrics.producto_mas_vendido"><code class="name">var <span class="ident">producto_mas_vendido</span> : str</code></dt>
+<dd>
+<div class="desc"><p>The type of the None singleton.</p></div>
+</dd>
+<dt id="ventas.VentasMetrics.promedio_por_venta"><code class="name">var <span class="ident">promedio_por_venta</span> : float</code></dt>
+<dd>
+<div class="desc"><p>The type of the None singleton.</p></div>
+</dd>
+<dt id="ventas.VentasMetrics.ventas_totales"><code class="name">var <span class="ident">ventas_totales</span> : float</code></dt>
+<dd>
+<div class="desc"><p>The type of the None singleton.</p></div>
+</dd>
+</dl>
+</dd>
+</dl>
+</section>
+</article>
+<nav id="sidebar">
+<div class="toc">
+<ul>
+<li><a href="#ventaspy">ventas.py</a></li>
+</ul>
+</div>
+<ul id="index">
+<li><h3><a href="#header-functions">Functions</a></h3>
+<ul class="">
+<li><code><a title="ventas.analizar_ventas_pandas" href="#ventas.analizar_ventas_pandas">analizar_ventas_pandas</a></code></li>
+<li><code><a title="ventas.analizar_ventas_streaming" href="#ventas.analizar_ventas_streaming">analizar_ventas_streaming</a></code></li>
+<li><code><a title="ventas.generar_csv_ventas" href="#ventas.generar_csv_ventas">generar_csv_ventas</a></code></li>
+<li><code><a title="ventas.main" href="#ventas.main">main</a></code></li>
+</ul>
+</li>
+<li><h3><a href="#header-classes">Classes</a></h3>
+<ul>
+<li>
+<h4><code><a title="ventas.VentasMetrics" href="#ventas.VentasMetrics">VentasMetrics</a></code></h4>
+<ul class="">
+<li><code><a title="ventas.VentasMetrics.cantidad_mas_vendida" href="#ventas.VentasMetrics.cantidad_mas_vendida">cantidad_mas_vendida</a></code></li>
+<li><code><a title="ventas.VentasMetrics.num_registros" href="#ventas.VentasMetrics.num_registros">num_registros</a></code></li>
+<li><code><a title="ventas.VentasMetrics.producto_mas_vendido" href="#ventas.VentasMetrics.producto_mas_vendido">producto_mas_vendido</a></code></li>
+<li><code><a title="ventas.VentasMetrics.promedio_por_venta" href="#ventas.VentasMetrics.promedio_por_venta">promedio_por_venta</a></code></li>
+<li><code><a title="ventas.VentasMetrics.ventas_totales" href="#ventas.VentasMetrics.ventas_totales">ventas_totales</a></code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</nav>
+</main>
+<footer id="footer">
+<p>Generated by <a href="https://pdoc3.github.io/pdoc" title="pdoc: Python API documentation generator"><cite>pdoc</cite> 0.11.6</a>.</p>
+</footer>
+</body>
+</html>

@@ -53,7 +53,6 @@ def test_analizar_streaming(tmp_path):
     assert isinstance(m.producto_mas_vendido, str)
 
 
-@pytest.mark.skipif("pandas" not in globals(), reason="pandas no disponible")
 def test_analizar_pandas(tmp_path):
     ruta = tmp_path / "ventas.csv"
     generar_csv_ventas(str(ruta), num_registros=1000, seed=7)

@@ -1,4 +1,0 @@
-pandas
-line_profiler
-memory_profiler
-pytest
