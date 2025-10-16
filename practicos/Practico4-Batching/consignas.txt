@@ -1,0 +1,22 @@
+Ejercicio 1: Se tiene un archivo de texto con millones de registros (cada línea es un registro). Escribe un programa en Python que lea el archivo de forma eficiente en lotes de 100 líneas y procese cada lote imprimiendo cuántas líneas contiene.
+# Ejemplo de uso
+leer_por_lotes("archivo_grande.txt", batch_size=100)
+
+Ejercicio 2: Dada una lista de números del 1 al 50, divídela en lotes de 10 y calcula la suma de cada lote.
+Salida esperada:
+Lote 1: [1,2,...,10] → Suma: 55
+Lote 2: [11,...,20] → Suma: 155
+...
+Lote 5: [41,...,50] → Suma: 455
+
+Ejercicio 3: Simula que tienes que insertar 1000 registros en una base de datos. En lugar de insertar de a uno, agrúpalos en lotes de 200. Imprime cada lote cuando se "inserte".
+
+Ejercicio 4: Supongamos que tienes una cola de 27 mensajes. Envía los mensajes en lotes de 5 y marca cada lote como "enviado".
+📌 Salida:
+Enviando lote 1: ['msg_1', ..., 'msg_5']
+Enviando lote 2: ['msg_6', ..., 'msg_10']
+...
+Enviando lote 6: ['msg_26', 'msg_27']
+
+Ejercicio 5: Dada una lista de 100 números, procesa los datos en lotes de 20 usando paralelismo con concurrent.futures.
+Cada lote debe calcular la suma de sus elementos.
