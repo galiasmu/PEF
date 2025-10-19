@@ -1,0 +1,32 @@
+Ejercicio 1 – Profiling con cProfile
+📌 Enunciado:
+Escribí una función que calcule la suma de los primeros n números naturales. Luego, usá cProfile para medir el rendimiento cuando n = 1_000_000.
+
+Ejercicio 2 – Optimización detectada por Profiling
+📌 Enunciado:
+Optimizar el ejercicio anterior usando la fórmula matemática de la suma:
+
+suma(n) = (n*(n+1))/2	 
+
+Compará con cProfile.
+
+Ejercicio 3 – Profiling de memoria con memory_profiler
+📌 Enunciado:
+Escribí una función que genere una lista con los cuadrados de los primeros n números. Medí el consumo de memoria con memory_profiler.
+
+Ejercicio 4 – Optimización con Generadores
+📌 Enunciado:
+Reescribí el ejercicio anterior con un generador para reducir el consumo de memoria.
+
+Ejercicio 5 – Testing con unittest
+📌 Enunciado:
+Escribí una función es_primo(n) que devuelva True si n es primo y False en caso contrario.
+Luego, escribí un test con unittest para validar la función.
+
+Ejercicio 6 – Testing con pytest
+📌 Enunciado:
+Probá la función del ejercicio anterior  con pytest asegurando que funciona correctamente.
+
+Ejercicio 7 – Doctest
+📌 Enunciado:
+Agregá un doctest en la función es_primo luego realiza el testing.

@@ -1,2 +1,4 @@
 .idea/
 ./archivo_grande.txt
+*.prof
+*.out
