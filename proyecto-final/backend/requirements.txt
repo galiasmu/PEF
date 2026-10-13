@@ -12,6 +12,8 @@ python-dotenv==1.0.1
 # IA: modelo de análisis de sentimiento
 transformers==4.45.2
 torch>=2.3.0
+sentencepiece==0.2.2  # el tokenizador del modelo las necesita
+protobuf==7.36.2
 
 # Testing
 pytest==9.1.1

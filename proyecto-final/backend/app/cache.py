@@ -1,25 +1,35 @@
-import time
-from typing import Any, Dict, Tuple
+"""Cache LRU (Least Recently Used) con operaciones en O(1)."""
+from collections import OrderedDict
 
-class TTLCache:
-    def __init__(self, ttl_seconds: int = 60, maxsize: int = 128):
-        self.ttl = ttl_seconds
+
+class LRUCache:
+    """Guarda hasta ``maxsize`` valores. Cuando se llena, descarta el menos usado.
+
+    ``OrderedDict`` mantiene el orden de uso: ``move_to_end`` marca una clave
+    como recién usada y ``popitem(last=False)`` saca la más vieja. Las dos
+    operaciones son O(1).
+
+    No se usa ``functools.lru_cache`` porque ese decorador memoiza llamadas a
+    una función de a un argumento por vez, y acá los textos se procesan por lote.
+    """
+
+    def __init__(self, maxsize: int = 10_000):
         self.maxsize = maxsize
-        self._store: Dict[Any, Tuple[float, Any]] = {}
+        self._data: OrderedDict = OrderedDict()
 
-    def get(self, key: Any):
-        now = time.time()
-        v = self._store.get(key)
-        if not v:
+    def get(self, key):
+        """Devuelve el valor guardado, o None si no está."""
+        if key not in self._data:
             return None
-        ts, val = v
-        if now - ts > self.ttl:
-            self._store.pop(key, None)
-            return None
-        return val
+        self._data.move_to_end(key)
+        return self._data[key]
 
-    def set(self, key: Any, val: Any):
-        if len(self._store) >= self.maxsize:
-            oldest = min(self._store.items(), key=lambda x: x[1][0])[0]
-            self._store.pop(oldest, None)
-        self._store[key] = (time.time(), val)
+    def put(self, key, value) -> None:
+        """Guarda un valor; si se supera ``maxsize``, descarta el menos usado."""
+        self._data[key] = value
+        self._data.move_to_end(key)
+        if len(self._data) > self.maxsize:
+            self._data.popitem(last=False)
+
+    def __len__(self) -> int:
+        return len(self._data)

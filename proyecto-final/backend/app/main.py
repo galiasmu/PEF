@@ -9,6 +9,7 @@ from starlette.websockets import WebSocketDisconnect
 
 from .config import settings
 from .pipeline import produce, time_windows
+from .sentiment import SentimentAnalyzer, load_model
 from .sources import build_source
 
 # ----------------- Configuración -----------------
@@ -17,38 +18,7 @@ if settings.source == "youtube":
     settings.require_youtube()
 
 # --------------- Sentimiento ---------------
-def build_sentiment():
-    try:
-        from transformers import pipeline
-        model = settings.model_name
-        pipe = pipeline("text-classification", model=model, tokenizer=model, top_k=None)
-        def _f(text: str):
-            if not text:
-                return {"positive": 0.0, "neutral": 1.0, "negative": 0.0}
-            res = pipe(text, truncation=True)[0]
-            out = {"positive": 0.0, "neutral": 0.0, "negative": 0.0}
-            for it in res:
-                lab = it["label"].lower()
-                if "pos" in lab: out["positive"] = float(it["score"])
-                elif "neu" in lab: out["neutral"] = float(it["score"])
-                elif "neg" in lab or "label_0" in lab: out["negative"] = float(it["score"])
-            if out["positive"] == out["neutral"] == out["negative"] == 0.0:
-                out["neutral"] = 1.0
-            return out
-        return _f
-    except Exception:
-        pos = {"genial","buena","excelente","increible","bien","me encanta","gracias","love","cool"}
-        neg = {"malo","horrible","odio","asco","mierda","wtf","feo"}
-        def _f(text: str):
-            t = (text or "").lower()
-            p = sum(w in t for w in pos)
-            n = sum(w in t for w in neg)
-            if p == 0 and n == 0: return {"positive":0.0,"neutral":1.0,"negative":0.0}
-            tot = p + n
-            return {"positive": p/tot, "neutral": 0.0, "negative": n/tot}
-        return _f
-
-analyze_sentiment = build_sentiment()
+analyzer = SentimentAnalyzer(load_model(settings.model_name))
 
 HASHTAG_RE = re.compile(r"(#\w+)", re.UNICODE)
 def extract_hashtags(text: str):
@@ -76,8 +46,11 @@ async def collect_and_window(ws: WebSocket):
         producer = asyncio.create_task(produce(source, queue))
         try:
             async for window in time_windows(queue, settings.window_seconds):
-                for comment in window:
-                    comment["sentiment"] = analyze_sentiment(comment["text"])
+                # El modelo corre en otro hilo: mientras analiza, el productor sigue trabajando.
+                texts = [comment["text"] for comment in window]
+                scores = await asyncio.to_thread(analyzer.analyze, texts)
+                for comment, sentiment in zip(window, scores):
+                    comment["sentiment"] = sentiment
                 await ws.send_json(aggregate(window))
         finally:
             producer.cancel()
