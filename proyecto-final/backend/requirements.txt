@@ -18,4 +18,7 @@ protobuf==7.36.2
 # Testing y estilo (PEP 8)
 pytest==9.1.1
 pytest-asyncio==1.4.0
+pytest-cov==7.1.0     # cobertura de los tests
+hypothesis==6.169.0   # tests basados en propiedades
+httpx==0.28.1         # lo usa el TestClient de FastAPI
 flake8==7.4.1

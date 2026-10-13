@@ -147,6 +147,21 @@ Desde `backend/`, con el entorno activado:
 pytest
 ```
 
+Se usan varias herramientas de testing:
+
+- **pytest**: tests unitarios de cada módulo (`app/tests/`).
+- **Test de integración** (`test_main.py`): levanta el servidor con la fuente simulada y se conecta por
+  WebSocket, de punta a punta. Un servidor falso imita a la API de YouTube (`test_sources.py`).
+- **Hypothesis** (`test_properties.py`): genera cientos de casos al azar y compara el cache LRU y las
+  tendencias contra una versión ingenua, fácil de verificar a mano.
+- **doctest**: los ejemplos de los docstrings (`>>>`) también se ejecutan como tests.
+
+Cobertura de los tests (qué porcentaje del código ejecutan):
+
+```bash
+pytest --cov=app --cov-report=term-missing
+```
+
 Chequeo de estilo PEP 8 (configurado en `.flake8`, con líneas de hasta 99 caracteres):
 
 ```bash

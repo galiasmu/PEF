@@ -11,7 +11,11 @@ LABELS = ("positive", "neutral", "negative")
 
 
 def extract_hashtags(text: str) -> list[str]:
-    """Devuelve los hashtags del texto, en minúscula y sin el '#'."""
+    """Devuelve los hashtags del texto, en minúscula y sin el '#'.
+
+    >>> extract_hashtags("Muy bueno #Python #IA!")
+    ['python', 'ia']
+    """
     return [tag.lower() for tag in HASHTAG_RE.findall(text)]
 
 

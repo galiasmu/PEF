@@ -1,4 +1,10 @@
-from app.sources import SeenIds, parse_comment, simulated_comments
+from aiohttp import web
+from aiohttp.test_utils import TestServer
+
+from app import sources
+from app.sources import SeenIds, parse_comment, simulated_comments, youtube_comments
+
+API_ITEM = {"id": "c1", "snippet": {"topLevelComment": {"snippet": {"textOriginal": "hola #ia"}}}}
 
 
 def test_seen_ids_dedupe():
@@ -17,8 +23,28 @@ def test_seen_ids_bounded_memory():
 
 
 def test_parse_comment():
-    item = {"id": "abc", "snippet": {"topLevelComment": {"snippet": {"textOriginal": "hola #ia"}}}}
-    assert parse_comment(item) == {"id": "abc", "text": "hola #ia"}
+    assert parse_comment(API_ITEM) == {"id": "c1", "text": "hola #ia"}
+
+
+async def test_youtube_comments_with_fake_api(monkeypatch):
+    """Un servidor falso imita a la API de YouTube: 2 respuestas iguales y un error de cuota."""
+    responses = [web.json_response({"items": [API_ITEM]}),
+                 web.json_response({"items": [API_ITEM]}),
+                 web.Response(status=403)]
+
+    async def fake_api(request):
+        return responses.pop(0)
+
+    app = web.Application()
+    app.router.add_get("/", fake_api)
+    async with TestServer(app) as server:
+        monkeypatch.setattr(sources, "API_URL", str(server.make_url("/")))
+        stream = youtube_comments("clave", "video", "abc", poll_interval=0)
+
+        assert await anext(stream) == [{"id": "c1", "text": "hola #ia"}]
+        assert await anext(stream) == []    # el mismo comentario otra vez: ya visto
+        assert await anext(stream) == []    # error 403 (cuota agotada): lote vacío y sigue
+        await stream.aclose()
 
 
 async def test_simulated_batches():

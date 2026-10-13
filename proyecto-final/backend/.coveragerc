@@ -1,0 +1,3 @@
+[run]
+# La cobertura se mide sobre el código del proyecto, no sobre los propios tests.
+omit = app/tests/*

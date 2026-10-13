@@ -38,7 +38,8 @@ class Settings(BaseModel):
             RuntimeError: si falta la API key o el ID del video/canal.
         """
         if not self.youtube_api_key or not self.target_id:
-            raise RuntimeError("Falta YOUTUBE_API_KEY o TARGET_ID en backend/.env")
+            raise RuntimeError("Falta YOUTUBE_API_KEY o TARGET_ID en backend/.env "
+                               "(para probar sin API key, usar SOURCE=simulated)")
 
 
 settings = Settings()
