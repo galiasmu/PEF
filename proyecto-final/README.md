@@ -20,41 +20,72 @@ Cada cierto intervalo (una *ventana de tiempo*) calcula:
 
 Los resultados se muestran en vivo en un **dashboard web**.
 
-## ¿Cómo funciona?
+## Arquitectura
 
 ```
-fuente ──► productor ──► cola (MAX_QUEUE) ──► ventanas de tiempo ──► sentimiento + resumen ──► WebSocket ──► dashboard
+YouTube API (o fuente simulada)
+      │   generador async: un lote de comentarios nuevos por consulta
+      ▼
+  productor ──► cola acotada ──► ventanas de tiempo
+                                        │
+                                        ▼
+                        sentimiento por lote (en otro hilo)
+                                        │
+                                        ▼
+                     resumen + tendencias (TTL) ──► WebSocket (broadcast)
+                                                          │
+                                                          ▼
+                                            dashboard 1, dashboard 2, ...
 ```
 
 El pipeline arranca **una sola vez**, junto con el servidor, y reparte (*broadcast*) cada resumen a
 todos los clientes conectados: no importa cuántas pestañas del dashboard estén abiertas, se consulta
 a YouTube y se usa el modelo una sola vez por ventana.
 
-1. La **fuente de datos** (`app/sources.py`) es un *generador asíncrono* que entrega, en cada consulta,
-   un lote con los comentarios nuevos:
-   - **YouTube:** consulta la API (`commentThreads`) con `aiohttp`, sin bloquear el servidor, y descarta
-     los comentarios ya vistos.
-   - **Simulada:** genera comentarios falsos, para probar el sistema sin API key.
-2. El **pipeline** (`app/pipeline.py`) funciona con concurrencia (`asyncio`):
-   - un **productor** corre como tarea aparte y pone cada comentario en una **cola**;
-   - la cola tiene tamaño máximo (`MAX_QUEUE`): si se llena, el productor espera (*backpressure*);
-   - el consumidor agrupa lo que sale de la cola en **ventanas de tiempo** de `WINDOW_SECONDS`
-     segundos (emite la ventana aunque esté vacía).
-3. El **análisis de sentimiento** (`app/sentiment.py`) procesa los comentarios de la ventana **por lote**:
-   - el modelo recibe todos los textos juntos (3,2 veces más rápido que de a uno, medido con 64 comentarios);
-   - corre **en otro hilo** (`asyncio.to_thread`), así no frena al productor mientras analiza;
-   - los resultados se **memoizan** en un cache LRU (`app/cache.py`): un texto repetido no vuelve a
-     pasar por el modelo;
-   - si el modelo no se puede cargar, se avisa y se usa un análisis léxico simple (listas de palabras).
-4. Se calcula el resumen de la ventana (`app/aggregator.py`): total, top de hashtags (con
-   `collections.Counter`) y sentimiento promedio.
-5. Las **tendencias** (`app/trends.py`) funcionan como un cache con vencimiento (TTL): cada ventana suma
-   sus hashtags y, pasados `TREND_SECONDS` segundos, se descuenta sola. Las ventanas vencen en el
-   mismo orden en que entraron, así que alcanza con una `deque` (FIFO).
-6. El resumen se envía por **WebSocket** a todos los clientes (`app/main.py`), y el **dashboard**
-   (`ui-mini/`) actualiza los gráficos: comentarios por ventana, sentimiento promedio, tendencias y
-   hashtags de la ventana. Muestra solo las últimas 30 ventanas (la memoria del navegador no crece
-   sin límite) y, si el backend se reinicia, se reconecta solo.
+| Módulo | Responsabilidad |
+|---|---|
+| `app/sources.py` | Fuentes de datos: YouTube (`aiohttp`) y simulada. Son **generadores asíncronos** que entregan un lote de comentarios nuevos por consulta. |
+| `app/pipeline.py` | **Productor** que pone los comentarios en una **cola acotada** y **ventanas de tiempo** que los agrupan. |
+| `app/sentiment.py` | Análisis de sentimiento **por lote**, con **memoización**. Si el modelo no carga, avisa y usa un análisis léxico. |
+| `app/cache.py` | Cache **LRU** en O(1) (`OrderedDict`). |
+| `app/trends.py` | **Tendencias** con vencimiento por tiempo (TTL): `Counter` + `deque`. |
+| `app/aggregator.py` | Resumen de cada ventana y extracción de hashtags (`Counter`). |
+| `app/main.py` | Servidor: arranca el pipeline, corre el modelo en otro hilo y reparte los resúmenes por WebSocket. |
+| `app/config.py` | Configuración, leída una sola vez desde el `.env`. |
+| `ui-mini/` | Dashboard (HTML + Chart.js): últimas 30 ventanas, tendencias, reconexión automática. |
+
+## Requisitos de la consigna y dónde están
+
+| Requisito | Dónde y cómo |
+|---|---|
+| Concurrencia / paralelismo para procesar el stream | **Concurrencia** con `asyncio`: el productor corre como tarea aparte y sigue trayendo comentarios mientras se procesa la ventana anterior (`pipeline.py`). **Paralelismo**: el modelo corre en otro hilo con `asyncio.to_thread`; torch libera el GIL mientras calcula (`main.py`). |
+| Batching de mensajes en ventanas temporales | `time_windows` agrupa los comentarios en ventanas de `WINDOW_SECONDS` y emite aunque estén vacías (`pipeline.py`). El modelo analiza cada ventana como un lote (`sentiment.py`). |
+| Caching inteligente de tendencias recurrentes | `TrendingHashtags`: cada ventana suma sus hashtags y, pasado `TREND_SECONDS`, se descuenta sola; lo viejo se invalida automáticamente (`trends.py`). Además, `LRUCache` memoiza el sentimiento de textos repetidos (`cache.py`). |
+| Generadores para recorrer el stream sin cargar todo | Las fuentes y las ventanas son generadores asíncronos (`sources.py`, `pipeline.py`). |
+| Conteo eficiente de hashtags | `collections.Counter` y `most_common` (`aggregator.py`, `trends.py`). |
+| Profiling y refactorización | cProfile y benchmarks de antes y después (`backend/scripts/`, resultados en [docs/rendimiento.md](docs/rendimiento.md)). Código refactorizado en módulos con una sola responsabilidad, PEP 8 verificado con `flake8`. |
+| Testing para validar el análisis | 23 tests con pytest (93 % de cobertura): unitarios, integración de punta a punta, Hypothesis y doctest. |
+| IA: análisis de sentimiento con ML/NLP | Modelo transformer multilingüe de Hugging Face (`sentiment.py`). |
+
+## Decisiones de optimización
+
+Cada optimización se midió contra la versión anterior (detalle en [docs/rendimiento.md](docs/rendimiento.md)):
+
+| Decisión | Por qué | Resultado medido |
+|---|---|---|
+| Sentimiento **por lote** | Llamar al modelo una vez por ventana en lugar de una vez por comentario. | 3x más rápido |
+| **Memoización** con cache LRU | Los comentarios repetidos (spam, copias) no vuelven a pasar por el modelo. | De 549 ms a 0,03 ms |
+| Modelo **en otro hilo** | Mientras el modelo analiza, el servidor sigue atendiendo. | Pausa máxima del servidor: de 543 ms a 17 ms |
+| `LRUCache` con `OrderedDict` | El cache original buscaba el más viejo recorriendo todo (O(n)); ahora es O(1). | 266x más rápido |
+| `SeenIds` (`set` + `deque`) | El `set` original de comentarios vistos crecía sin límite. | 15x menos memoria |
+| Tendencias **incrementales** | Solo se suma la ventana nueva y se descuentan las vencidas, en vez de recalcular todo. | 2x con 1 hora de datos, y la diferencia crece con el tiempo |
+| **Un solo pipeline** con broadcast | Antes cada pestaña del dashboard hacía sus propias consultas a YouTube y su propio análisis. | N pestañas → 1 consulta por ventana |
+| `aiohttp` en lugar de `requests` | `requests` bloqueaba todo el servidor mientras esperaba la red. | El servidor no se frena esperando a YouTube |
+
+**Dónde se va el tiempo (cProfile):** el modelo de IA se lleva el **99,9 %** del procesamiento, y el
+conteo de hashtags y las tendencias, menos del 0,1 %. Por eso las optimizaciones se concentraron en
+el modelo: se midió primero y se optimizó el cuello de botella, en lugar de optimizar de forma
+prematura lo que ya era rápido.
 
 ## Estructura
 
@@ -92,16 +123,19 @@ proyecto-final/
 ```bash
 cd proyecto-final/backend
 py -3.12 -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
+.venv\Scripts\python -m pip install -r requirements.txt
 ```
 
-En Linux/Mac, activar el entorno con `source .venv/bin/activate`.
+En Linux/Mac: `python3 -m venv .venv` y `.venv/bin/python -m pip install -r requirements.txt`.
+
+Los comandos de abajo usan `python` como si el entorno estuviera activado
+(`.venv\Scripts\activate`). Si PowerShell no deja activarlo, se puede reemplazar `python` por
+`.venv\Scripts\python` en cada comando.
 
 ### Configuración
 
-Copiar la plantilla `backend/.env.example` como `backend/.env` y completar la API key
-y el ID del video. El `.env` no se sube al repositorio.
+Copiar la plantilla `backend/.env.example` como `backend/.env` y completar los valores.
+El `.env` no se sube al repositorio.
 
 ```bash
 copy .env.example .env
@@ -118,20 +152,23 @@ En Linux/Mac: `cp .env.example .env`.
 | `POLL_INTERVAL` | `5` | Segundos entre consultas a YouTube |
 | `WINDOW_SECONDS` | `10` | Duración de cada ventana de análisis, en segundos |
 | `TREND_SECONDS` | `60` | Las tendencias cuentan los hashtags de los últimos N segundos |
-| `MAX_QUEUE` | `5000` | Tamaño máximo de las colas internas |
+| `MAX_QUEUE` | `5000` | Tamaño máximo de la cola interna |
 | `SENTIMENT_MODEL` | `cardiffnlp/twitter-xlm-roberta-base-sentiment` | Modelo de Hugging Face para el sentimiento |
 
-Toda la configuración se lee en un único lugar: `app/config.py`.
+Cuota de YouTube: cada consulta gasta 1 unidad y el límite gratuito es de 10.000 por día. Con
+`POLL_INTERVAL=5`, el servidor prendido todo el día haría 17.280 consultas; para dejarlo corriendo
+muchas horas conviene usar `POLL_INTERVAL=10`.
 
 ### Ejecución
 
 Desde `backend/`:
 
 ```bash
-uvicorn app.main:app --reload --port 8000
+python -m uvicorn app.main:app --reload --port 8000
 ```
 
-La primera vez se descarga el modelo de sentimiento (~1 GB, queda guardado en la caché de Hugging Face).
+La primera vez se descarga el modelo de sentimiento (~1 GB, queda guardado en la caché de Hugging
+Face). El servidor está listo cuando aparece `Application startup complete`.
 
 Después abrir el dashboard: doble clic en `ui-mini/index.html`, o servirlo y entrar a
 `http://127.0.0.1:8080`:
@@ -141,12 +178,16 @@ cd proyecto-final/ui-mini
 python -m http.server 8080
 ```
 
+El primer resumen aparece cuando se cierra la primera ventana (`WINDOW_SECONDS`). Otros endpoints:
+`http://127.0.0.1:8000/health` (estado y cantidad de clientes conectados) y
+`http://127.0.0.1:8000/docs` (documentación automática de FastAPI).
+
 ### Tests y estilo
 
-Desde `backend/`, con el entorno activado:
+Desde `backend/`:
 
 ```bash
-pytest
+python -m pytest
 ```
 
 Se usan varias herramientas de testing:
@@ -161,13 +202,13 @@ Se usan varias herramientas de testing:
 Cobertura de los tests (qué porcentaje del código ejecutan):
 
 ```bash
-pytest --cov=app --cov-report=term-missing
+python -m pytest --cov=app --cov-report=term-missing
 ```
 
 Chequeo de estilo PEP 8 (configurado en `.flake8`, con líneas de hasta 99 caracteres):
 
 ```bash
-flake8 app scripts
+python -m flake8 app scripts
 ```
 
 ### Benchmarks y profiling
@@ -177,7 +218,7 @@ Desde `backend/`:
 ```bash
 python -m scripts.benchmarks
 python -m scripts.profile_pipeline
-snakeviz pipeline.prof
+python -m snakeviz pipeline.prof
 ```
 
 `benchmarks` compara cada optimización contra la versión anterior; `profile_pipeline` usa cProfile
