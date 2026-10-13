@@ -1,6 +1,6 @@
 # backend/app/main.py
+import asyncio
 import re
-import time
 from collections import Counter
 from contextlib import aclosing
 
@@ -8,6 +8,7 @@ from fastapi import FastAPI, WebSocket
 from starlette.websockets import WebSocketDisconnect
 
 from .config import settings
+from .pipeline import produce, time_windows
 from .sources import build_source
 
 # ----------------- Configuración -----------------
@@ -62,34 +63,25 @@ def health():
 
 # ----------- Colector + Ventanas -----------
 async def collect_and_window(ws: WebSocket):
-    """Recorre la fuente de comentarios y cada WINDOW_SECONDS envía el resumen.
+    """Arma el pipeline y envía al cliente el resumen de cada ventana.
 
-    La fuente es un generador asíncrono que entrega un lote de comentarios
-    nuevos por consulta (puede venir vacío). ``aclosing`` garantiza que la
-    fuente se cierre (y con ella la conexión HTTP) cuando el cliente se va.
+        fuente ──► productor ──► cola (MAX_QUEUE) ──► ventanas ──► WebSocket
+
+    El productor corre como una tarea aparte, así sigue trayendo comentarios
+    mientras se procesa la ventana anterior. Al salir (por ejemplo, porque el
+    cliente se desconectó) se cancela el productor y ``aclosing`` cierra la fuente.
     """
-    buffer = []
-    last_flush = time.monotonic()
-
+    queue = asyncio.Queue(maxsize=settings.max_queue)
     async with aclosing(build_source()) as source:
-        async for new_comments in source:
-            for comment in new_comments:
-                comment["sentiment"] = analyze_sentiment(comment["text"])
-                buffer.append(comment)
-
-            # flush de ventana cada WINDOW_SECONDS (aunque esté vacía)
-            now = time.monotonic()
-            if now - last_flush >= settings.window_seconds:
-                try:
-                    await ws.send_json(aggregate(buffer))
-                except WebSocketDisconnect:
-                    print("WS cliente desconectado")
-                    break
-                except Exception as e:
-                    print("WS send error:", repr(e))
-                    break
-                buffer.clear()
-                last_flush = now
+        producer = asyncio.create_task(produce(source, queue))
+        try:
+            async for window in time_windows(queue, settings.window_seconds):
+                for comment in window:
+                    comment["sentiment"] = analyze_sentiment(comment["text"])
+                await ws.send_json(aggregate(window))
+        finally:
+            producer.cancel()
+            await asyncio.gather(producer, return_exceptions=True)
 
 def aggregate(batch):
     total = len(batch)

@@ -22,12 +22,7 @@ Los resultados se muestran en vivo en un **dashboard web**.
 ## ¿Cómo funciona?
 
 ```
-Fuente (YouTube o simulada) ──(lote cada POLL_INTERVAL s)──► backend (FastAPI)
-                                                              │ 1. analiza el sentimiento
-                                                              │ 2. acumula en un buffer
-                                                              │ 3. cada WINDOW_SECONDS agrega la ventana
-                                                              ▼
-                                                 WebSocket /ws/metrics ──► dashboard (Chart.js)
+fuente ──► productor ──► cola (MAX_QUEUE) ──► ventanas de tiempo ──► sentimiento + resumen ──► WebSocket ──► dashboard
 ```
 
 1. La **fuente de datos** (`app/sources.py`) es un *generador asíncrono* que entrega, en cada consulta,
@@ -35,11 +30,15 @@ Fuente (YouTube o simulada) ──(lote cada POLL_INTERVAL s)──► backend (
    - **YouTube:** consulta la API (`commentThreads`) con `aiohttp`, sin bloquear el servidor, y descarta
      los comentarios ya vistos.
    - **Simulada:** genera comentarios falsos, para probar el sistema sin API key.
-2. Cada comentario pasa por el **modelo de sentimiento**. Si el modelo no está disponible, se usa un
-   análisis léxico simple (listas de palabras positivas y negativas).
-3. Los comentarios se acumulan y, al cerrar cada **ventana de tiempo**, se calcula el resumen:
-   total, top de hashtags (con `collections.Counter`) y sentimiento promedio.
-4. El resumen se envía por **WebSocket** al dashboard, que actualiza los gráficos.
+2. El **pipeline** (`app/pipeline.py`) funciona con concurrencia (`asyncio`):
+   - un **productor** corre como tarea aparte y pone cada comentario en una **cola**;
+   - la cola tiene tamaño máximo (`MAX_QUEUE`): si se llena, el productor espera (*backpressure*);
+   - el consumidor agrupa lo que sale de la cola en **ventanas de tiempo** de `WINDOW_SECONDS`
+     segundos (emite la ventana aunque esté vacía).
+3. Cada comentario de la ventana pasa por el **modelo de sentimiento**. Si el modelo no está disponible,
+   se usa un análisis léxico simple (listas de palabras positivas y negativas).
+4. Se calcula el resumen de la ventana: total, top de hashtags (con `collections.Counter`) y
+   sentimiento promedio, y se envía por **WebSocket** al dashboard, que actualiza los gráficos.
 
 ## Estructura
 
