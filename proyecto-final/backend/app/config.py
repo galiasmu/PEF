@@ -27,6 +27,7 @@ class Settings(BaseModel):
     target_id: str = os.getenv("TARGET_ID", "").strip()
     poll_interval_seconds: int = int(os.getenv("POLL_INTERVAL", "5"))
     window_seconds: int = int(os.getenv("WINDOW_SECONDS", "10"))
+    trend_seconds: int = int(os.getenv("TREND_SECONDS", "60"))
     max_queue: int = int(os.getenv("MAX_QUEUE", "5000"))
     model_name: str = os.getenv("SENTIMENT_MODEL", DEFAULT_MODEL).strip()
 

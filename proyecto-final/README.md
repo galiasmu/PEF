@@ -12,7 +12,8 @@ Recolecta los comentarios de un video (o canal) de YouTube y los analiza en tiem
 Cada cierto intervalo (una *ventana de tiempo*) calcula:
 
 - **Cantidad de comentarios** recibidos en la ventana.
-- **Hashtags más usados** (top 10).
+- **Hashtags más usados** (top 10) de la ventana.
+- **Tendencias**: los hashtags más usados en el último minuto (`TREND_SECONDS`).
 - **Sentimiento promedio** (positivo / neutral / negativo), usando un modelo de IA
   de procesamiento de lenguaje natural
   (`cardiffnlp/twitter-xlm-roberta-base-sentiment`, de Hugging Face `transformers`).
@@ -42,7 +43,11 @@ fuente ──► productor ──► cola (MAX_QUEUE) ──► ventanas de tiem
      pasar por el modelo;
    - si el modelo no se puede cargar, se avisa y se usa un análisis léxico simple (listas de palabras).
 4. Se calcula el resumen de la ventana: total, top de hashtags (con `collections.Counter`) y
-   sentimiento promedio, y se envía por **WebSocket** al dashboard, que actualiza los gráficos.
+   sentimiento promedio.
+5. Las **tendencias** (`app/trends.py`) funcionan como un cache con vencimiento (TTL): cada ventana suma
+   sus hashtags y, pasados `TREND_SECONDS` segundos, se descuenta sola. Las ventanas vencen en el
+   mismo orden en que entraron, así que alcanza con una `deque` (FIFO).
+6. El resumen se envía por **WebSocket** al dashboard, que actualiza los gráficos.
 
 ## Estructura
 
@@ -94,6 +99,7 @@ En Linux/Mac: `cp .env.example .env`.
 | `TARGET_ID` | — | ID del video (lo que sigue a `watch?v=` en la URL) o del canal |
 | `POLL_INTERVAL` | `5` | Segundos entre consultas a YouTube |
 | `WINDOW_SECONDS` | `10` | Duración de cada ventana de análisis, en segundos |
+| `TREND_SECONDS` | `60` | Las tendencias cuentan los hashtags de los últimos N segundos |
 | `MAX_QUEUE` | `5000` | Tamaño máximo de las colas internas |
 | `SENTIMENT_MODEL` | `cardiffnlp/twitter-xlm-roberta-base-sentiment` | Modelo de Hugging Face para el sentimiento |
 

@@ -1,6 +1,7 @@
 # backend/app/main.py
 import asyncio
 import re
+import time
 from collections import Counter
 from contextlib import aclosing
 
@@ -11,6 +12,7 @@ from .config import settings
 from .pipeline import produce, time_windows
 from .sentiment import SentimentAnalyzer, load_model
 from .sources import build_source
+from .trends import TrendingHashtags
 
 # ----------------- Configuración -----------------
 # Con la fuente de YouTube, el servidor no arranca si falta la API key.
@@ -42,6 +44,7 @@ async def collect_and_window(ws: WebSocket):
     cliente se desconectó) se cancela el productor y ``aclosing`` cierra la fuente.
     """
     queue = asyncio.Queue(maxsize=settings.max_queue)
+    trends = TrendingHashtags(settings.trend_seconds)
     async with aclosing(build_source()) as source:
         producer = asyncio.create_task(produce(source, queue))
         try:
@@ -51,12 +54,13 @@ async def collect_and_window(ws: WebSocket):
                 scores = await asyncio.to_thread(analyzer.analyze, texts)
                 for comment, sentiment in zip(window, scores):
                     comment["sentiment"] = sentiment
-                await ws.send_json(aggregate(window))
+                await ws.send_json(aggregate(window, trends))
         finally:
             producer.cancel()
             await asyncio.gather(producer, return_exceptions=True)
 
-def aggregate(batch):
+def aggregate(batch, trends: TrendingHashtags):
+    """Resume la ventana y actualiza las tendencias con sus hashtags."""
     total = len(batch)
     tags = Counter()
     sums = {"positive": 0.0, "neutral": 0.0, "negative": 0.0}
@@ -69,10 +73,13 @@ def aggregate(batch):
         sums["neutral"]  += float(s.get("neutral", 0.0))
         sums["negative"] += float(s.get("negative", 0.0))
 
+    trends.add(tags, time.monotonic())
+
     n = max(total, 1)
     return {
         "total_comments": total,
         "top_hashtags": tags.most_common(10),
+        "trending": trends.top(10),
         "avg_sentiment": {k: v/n for k, v in sums.items()},
     }
 
