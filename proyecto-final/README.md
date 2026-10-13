@@ -71,9 +71,11 @@ proyecto-final/
 │   │   ├── trends.py      # tendencias con vencimiento (TTL)
 │   │   ├── aggregator.py  # resumen de cada ventana y extracción de hashtags
 │   │   └── tests/         # tests con pytest
+│   ├── scripts/           # benchmarks y profiling
 │   ├── requirements.txt
 │   └── .env.example       # plantilla de configuración
-├── scripts/               # profiling
+├── docs/
+│   └── rendimiento.md     # mediciones de antes y después
 └── ui-mini/               # dashboard web (HTML + Chart.js)
 ```
 
@@ -165,5 +167,19 @@ pytest --cov=app --cov-report=term-missing
 Chequeo de estilo PEP 8 (configurado en `.flake8`, con líneas de hasta 99 caracteres):
 
 ```bash
-flake8 app
+flake8 app scripts
 ```
+
+### Benchmarks y profiling
+
+Desde `backend/`:
+
+```bash
+python -m scripts.benchmarks
+python -m scripts.profile_pipeline
+snakeviz pipeline.prof
+```
+
+`benchmarks` compara cada optimización contra la versión anterior; `profile_pipeline` usa cProfile
+para mostrar en qué se va el tiempo, y `snakeviz` lo muestra de forma gráfica. Los resultados
+están en [docs/rendimiento.md](docs/rendimiento.md).
