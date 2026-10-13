@@ -1,11 +1,30 @@
-from typing import List, Dict, Any
-from .utils_hashtags import count_hashtags
+"""Resumen de cada ventana: total, hashtags, tendencias y sentimiento promedio."""
+import re
+import time
+from collections import Counter
 
-def aggregate_window(batch: List[Dict[str, Any]]) -> Dict[str, Any]:
-    texts = [b.get('text', '') for b in batch]
-    hashtags_top = count_hashtags(texts, top_n=10)
-    total = len(batch)
+from .trends import TrendingHashtags
+
+# "#" seguido de letras/números/_ y que no esté pegado a una palabra (ej. "pagina#seccion").
+HASHTAG_RE = re.compile(r"(?<!\w)#(\w+)")
+LABELS = ("positive", "neutral", "negative")
+
+
+def extract_hashtags(text: str) -> list[str]:
+    """Devuelve los hashtags del texto, en minúscula y sin el '#'."""
+    return [tag.lower() for tag in HASHTAG_RE.findall(text)]
+
+
+def summarize(window: list[dict], trends: TrendingHashtags) -> dict:
+    """Resume una ventana de comentarios y actualiza las tendencias con sus hashtags."""
+    tags = Counter(tag for comment in window for tag in extract_hashtags(comment["text"]))
+    trends.add(tags, time.monotonic())
+
+    n = max(len(window), 1)  # evita dividir por cero en una ventana vacía
+    avg_sentiment = {label: sum(c["sentiment"][label] for c in window) / n for label in LABELS}
     return {
-        'total_comments': total,
-        'top_hashtags': hashtags_top,
+        "total_comments": len(window),
+        "top_hashtags": tags.most_common(10),
+        "trending": trends.top(10),
+        "avg_sentiment": avg_sentiment,
     }

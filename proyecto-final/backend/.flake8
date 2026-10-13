@@ -1,0 +1,4 @@
+[flake8]
+# PEP 8 permite subir el largo de línea hasta 99 caracteres si el equipo lo acuerda.
+max-line-length = 99
+exclude = .venv,__pycache__

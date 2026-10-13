@@ -1,47 +1,45 @@
-# backend/app/main.py
+"""Servidor: arma el pipeline una sola vez y reparte cada resumen a todos los clientes.
+
+    fuente ──► productor ──► cola ──► ventanas ──► sentimiento ──► resumen ──► clientes
+
+El pipeline arranca junto con el servidor (``lifespan``) y es único: no
+importa cuántas pestañas del dashboard estén abiertas, se consulta a YouTube
+y se usa el modelo una sola vez por ventana.
+"""
 import asyncio
-import re
-import time
-from collections import Counter
-from contextlib import aclosing
+import logging
+from contextlib import aclosing, asynccontextmanager
 
-from fastapi import FastAPI, WebSocket
-from starlette.websockets import WebSocketDisconnect
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 
+from .aggregator import summarize
 from .config import settings
 from .pipeline import produce, time_windows
 from .sentiment import SentimentAnalyzer, load_model
 from .sources import build_source
 from .trends import TrendingHashtags
 
-# ----------------- Configuración -----------------
-# Con la fuente de YouTube, el servidor no arranca si falta la API key.
-if settings.source == "youtube":
-    settings.require_youtube()
+logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s - %(message)s")
+log = logging.getLogger(__name__)
 
-# --------------- Sentimiento ---------------
-analyzer = SentimentAnalyzer(load_model(settings.model_name))
+clients: set[WebSocket] = set()  # clientes conectados al WebSocket
 
-HASHTAG_RE = re.compile(r"(#\w+)", re.UNICODE)
-def extract_hashtags(text: str):
-    return [h[1:].lower() for h in HASHTAG_RE.findall(text or "")]
 
-# ----------------- FastAPI -----------------
-app = FastAPI()
+async def broadcast(message: dict) -> None:
+    """Envía el resumen a todos los clientes; descarta los que ya no responden."""
+    for ws in list(clients):
+        try:
+            await ws.send_json(message)
+        except Exception:
+            clients.discard(ws)
 
-@app.get("/health")
-def health():
-    return {"status": "ok", "source": settings.source, "target_id": settings.target_id}
 
-# ----------- Colector + Ventanas -----------
-async def collect_and_window(ws: WebSocket):
-    """Arma el pipeline y envía al cliente el resumen de cada ventana.
-
-        fuente ──► productor ──► cola (MAX_QUEUE) ──► ventanas ──► WebSocket
+async def run_pipeline(analyzer: SentimentAnalyzer) -> None:
+    """Procesa el stream de comentarios ventana por ventana, mientras el servidor esté vivo.
 
     El productor corre como una tarea aparte, así sigue trayendo comentarios
-    mientras se procesa la ventana anterior. Al salir (por ejemplo, porque el
-    cliente se desconectó) se cancela el productor y ``aclosing`` cierra la fuente.
+    mientras se analiza la ventana anterior. El modelo corre en otro hilo
+    (``asyncio.to_thread``) para no frenar al resto.
     """
     queue = asyncio.Queue(maxsize=settings.max_queue)
     trends = TrendingHashtags(settings.trend_seconds)
@@ -49,53 +47,48 @@ async def collect_and_window(ws: WebSocket):
         producer = asyncio.create_task(produce(source, queue))
         try:
             async for window in time_windows(queue, settings.window_seconds):
-                # El modelo corre en otro hilo: mientras analiza, el productor sigue trabajando.
                 texts = [comment["text"] for comment in window]
                 scores = await asyncio.to_thread(analyzer.analyze, texts)
                 for comment, sentiment in zip(window, scores):
                     comment["sentiment"] = sentiment
-                await ws.send_json(aggregate(window, trends))
+                await broadcast(summarize(window, trends))
         finally:
             producer.cancel()
             await asyncio.gather(producer, return_exceptions=True)
 
-def aggregate(batch, trends: TrendingHashtags):
-    """Resume la ventana y actualiza las tendencias con sus hashtags."""
-    total = len(batch)
-    tags = Counter()
-    sums = {"positive": 0.0, "neutral": 0.0, "negative": 0.0}
 
-    for b in batch:
-        for h in extract_hashtags(b["text"]):
-            tags[h] += 1
-        s = b["sentiment"]
-        sums["positive"] += float(s.get("positive", 0.0))
-        sums["neutral"]  += float(s.get("neutral", 0.0))
-        sums["negative"] += float(s.get("negative", 0.0))
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Al arrancar el servidor, lanza el pipeline; al apagarlo, lo cancela."""
+    if settings.source == "youtube":
+        settings.require_youtube()  # sin API key, el servidor no arranca
+    analyzer = SentimentAnalyzer(load_model(settings.model_name))
+    log.info("Pipeline iniciado (fuente: %s)", settings.source)
+    pipeline_task = asyncio.create_task(run_pipeline(analyzer))
+    yield
+    pipeline_task.cancel()
+    await asyncio.gather(pipeline_task, return_exceptions=True)
 
-    trends.add(tags, time.monotonic())
 
-    n = max(total, 1)
-    return {
-        "total_comments": total,
-        "top_hashtags": tags.most_common(10),
-        "trending": trends.top(10),
-        "avg_sentiment": {k: v/n for k, v in sums.items()},
-    }
+app = FastAPI(lifespan=lifespan)
 
-# ---------------- WebSocket ----------------
+
+@app.get("/health")
+def health() -> dict:
+    return {"status": "ok", "source": settings.source, "clients": len(clients)}
+
+
 @app.websocket("/ws/metrics")
-async def ws_metrics(ws: WebSocket):
+async def ws_metrics(ws: WebSocket) -> None:
+    """Registra al cliente: desde ahí recibe un resumen por cada ventana."""
     await ws.accept()
-    print("✅ WS conectado")
+    clients.add(ws)
+    log.info("Cliente conectado (%d en total)", len(clients))
     try:
-        await collect_and_window(ws)
+        while True:
+            await ws.receive_text()  # el cliente no envía nada: solo esperamos a que se vaya
     except WebSocketDisconnect:
-        print("🔌 WS cerrado por cliente")
-    except Exception as e:
-        print("💥 WS error:", repr(e))
+        pass
     finally:
-        try:
-            await ws.close(code=1000)
-        except Exception:
-            pass
+        clients.discard(ws)
+        log.info("Cliente desconectado (%d en total)", len(clients))

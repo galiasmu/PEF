@@ -26,6 +26,10 @@ Los resultados se muestran en vivo en un **dashboard web**.
 fuente ──► productor ──► cola (MAX_QUEUE) ──► ventanas de tiempo ──► sentimiento + resumen ──► WebSocket ──► dashboard
 ```
 
+El pipeline arranca **una sola vez**, junto con el servidor, y reparte (*broadcast*) cada resumen a
+todos los clientes conectados: no importa cuántas pestañas del dashboard estén abiertas, se consulta
+a YouTube y se usa el modelo una sola vez por ventana.
+
 1. La **fuente de datos** (`app/sources.py`) es un *generador asíncrono* que entrega, en cada consulta,
    un lote con los comentarios nuevos:
    - **YouTube:** consulta la API (`commentThreads`) con `aiohttp`, sin bloquear el servidor, y descarta
@@ -42,23 +46,33 @@ fuente ──► productor ──► cola (MAX_QUEUE) ──► ventanas de tiem
    - los resultados se **memoizan** en un cache LRU (`app/cache.py`): un texto repetido no vuelve a
      pasar por el modelo;
    - si el modelo no se puede cargar, se avisa y se usa un análisis léxico simple (listas de palabras).
-4. Se calcula el resumen de la ventana: total, top de hashtags (con `collections.Counter`) y
-   sentimiento promedio.
+4. Se calcula el resumen de la ventana (`app/aggregator.py`): total, top de hashtags (con
+   `collections.Counter`) y sentimiento promedio.
 5. Las **tendencias** (`app/trends.py`) funcionan como un cache con vencimiento (TTL): cada ventana suma
    sus hashtags y, pasados `TREND_SECONDS` segundos, se descuenta sola. Las ventanas vencen en el
    mismo orden en que entraron, así que alcanza con una `deque` (FIFO).
-6. El resumen se envía por **WebSocket** al dashboard, que actualiza los gráficos.
+6. El resumen se envía por **WebSocket** a todos los clientes (`app/main.py`), y el dashboard actualiza
+   los gráficos.
 
 ## Estructura
 
 ```
 proyecto-final/
 ├── backend/
-│   ├── app/          # código del backend (FastAPI)
-│   │   └── tests/    # tests con pytest
-│   └── requirements.txt
-├── scripts/          # profiling
-└── ui-mini/          # dashboard web (HTML + Chart.js)
+│   ├── app/
+│   │   ├── main.py        # servidor FastAPI: arranca el pipeline y reparte los resúmenes
+│   │   ├── config.py      # configuración (lee el .env)
+│   │   ├── sources.py     # fuentes de datos: YouTube y simulada (generadores async)
+│   │   ├── pipeline.py    # productor, cola y ventanas de tiempo
+│   │   ├── sentiment.py   # análisis de sentimiento por lote, con memoización
+│   │   ├── cache.py       # cache LRU
+│   │   ├── trends.py      # tendencias con vencimiento (TTL)
+│   │   ├── aggregator.py  # resumen de cada ventana y extracción de hashtags
+│   │   └── tests/         # tests con pytest
+│   ├── requirements.txt
+│   └── .env.example       # plantilla de configuración
+├── scripts/               # profiling
+└── ui-mini/               # dashboard web (HTML + Chart.js)
 ```
 
 ## Cómo correrlo
@@ -117,10 +131,16 @@ La primera vez se descarga el modelo de sentimiento (~1 GB, queda guardado en la
 
 Después abrir `ui-mini/index.html` en el navegador (o servirlo con `npx live-server --port=8080`).
 
-### Tests
+### Tests y estilo
 
 Desde `backend/`, con el entorno activado:
 
 ```bash
 pytest
+```
+
+Chequeo de estilo PEP 8 (configurado en `.flake8`, con líneas de hasta 99 caracteres):
+
+```bash
+flake8 app
 ```

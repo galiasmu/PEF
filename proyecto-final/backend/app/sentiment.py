@@ -19,7 +19,8 @@ Scores = dict[str, float]  # {"positive": p, "neutral": n, "negative": g}
 # Algunos modelos devuelven "LABEL_0/1/2" en lugar del nombre de la clase.
 LABEL_ALIASES = {"label_0": "negative", "label_1": "neutral", "label_2": "positive"}
 
-POSITIVE_WORDS = {"genial", "buena", "excelente", "increible", "bien", "me encanta", "gracias", "love", "cool"}
+POSITIVE_WORDS = {"genial", "buena", "excelente", "increible", "bien", "me encanta", "gracias",
+                  "love", "cool"}
 NEGATIVE_WORDS = {"malo", "horrible", "odio", "asco", "feo", "wtf"}
 
 
@@ -69,7 +70,10 @@ class SentimentAnalyzer:
         self._lock = threading.Lock()  # un solo hilo usa el modelo y el cache a la vez
 
     def analyze(self, texts: list[str]) -> list[Scores]:
-        """Devuelve los scores de cada texto. Solo pasan por el modelo los que no están en cache."""
+        """Devuelve los scores de cada texto.
+
+        Solo pasan por el modelo los textos que todavía no están en el cache.
+        """
         with self._lock:
             results = {t: self.cache.get(t) for t in set(texts)}
             missing = [t for t, scores in results.items() if scores is None]
