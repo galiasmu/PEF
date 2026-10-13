@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Bossio–Asmuzi Dashboard</title>
+  <style>
+    body{font-family:system-ui,Roboto,Arial,sans-serif;margin:20px;background:#0b1220;color:#e6edf3}
+    .card{background:#111a2b;border-radius:16px;padding:16px;box-shadow:0 2px 16px rgba(0,0,0,.25);margin-bottom:16px}
+    h1{font-size:24px;margin:0 0 8px}
+    #chips span{display:inline-block;background:#1f2937;color:#c9d1d9;padding:6px 10px;border-radius:12px;margin:4px}
+    .row{display:flex;gap:16px;flex-wrap:wrap}
+    .col{flex:1 1 320px}
+    canvas{background:#0e1625;border-radius:8px;padding:8px}
+  </style>
+</head>
+<body>
+  <h1>YouTube Analytics</h1>
+  <div class="row">
+    <div class="col card">
+      <h3>Comentarios por ventana</h3>
+      <canvas id="chartCount" height="160"></canvas>
+    </div>
+    <div class="col card">
+      <h3>Sentimiento promedio</h3>
+      <canvas id="chartSent" height="160"></canvas>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Top Hashtags</h3>
+    <div id="chips"></div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

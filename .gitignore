@@ -2,3 +2,9 @@
 ./archivo_grande.txt
 *.prof
 *.out
+
+# Proyecto final
+.env
+.venv/
+__pycache__/
+.pytest_cache/
