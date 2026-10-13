@@ -8,7 +8,7 @@
 
 ## ¿Qué hace?
 
-Recolecta los comentarios de un video de YouTube y los analiza en tiempo casi real.
+Recolecta los comentarios de un video (o canal) de YouTube y los analiza en tiempo casi real.
 Cada cierto intervalo (una *ventana de tiempo*) calcula:
 
 - **Cantidad de comentarios** recibidos en la ventana.
@@ -22,16 +22,19 @@ Los resultados se muestran en vivo en un **dashboard web**.
 ## ¿Cómo funciona?
 
 ```
-YouTube Data API ──(consulta cada POLL_INTERVAL s)──► backend (FastAPI)
-                                                       │ 1. descarta comentarios ya vistos
-                                                       │ 2. analiza el sentimiento
-                                                       │ 3. acumula en un buffer
-                                                       │ 4. cada WINDOW_SECONDS agrega la ventana
-                                                       ▼
-                                          WebSocket /ws/metrics ──► dashboard (Chart.js)
+Fuente (YouTube o simulada) ──(lote cada POLL_INTERVAL s)──► backend (FastAPI)
+                                                              │ 1. analiza el sentimiento
+                                                              │ 2. acumula en un buffer
+                                                              │ 3. cada WINDOW_SECONDS agrega la ventana
+                                                              ▼
+                                                 WebSocket /ws/metrics ──► dashboard (Chart.js)
 ```
 
-1. El **backend** consulta periódicamente la API de YouTube (`commentThreads`) y toma los comentarios nuevos.
+1. La **fuente de datos** (`app/sources.py`) es un *generador asíncrono* que entrega, en cada consulta,
+   un lote con los comentarios nuevos:
+   - **YouTube:** consulta la API (`commentThreads`) con `aiohttp`, sin bloquear el servidor, y descarta
+     los comentarios ya vistos.
+   - **Simulada:** genera comentarios falsos, para probar el sistema sin API key.
 2. Cada comentario pasa por el **modelo de sentimiento**. Si el modelo no está disponible, se usa un
    análisis léxico simple (listas de palabras positivas y negativas).
 3. Los comentarios se acumulan y, al cerrar cada **ventana de tiempo**, se calcula el resumen:
@@ -55,7 +58,8 @@ proyecto-final/
 ### Requisitos
 
 - Python 3.12
-- Una API key de **YouTube Data API v3** ([cómo obtenerla](https://developers.google.com/youtube/v3/getting-started))
+- Una API key de **YouTube Data API v3** ([cómo obtenerla](https://developers.google.com/youtube/v3/getting-started)).
+  No hace falta si se usa la fuente simulada (`SOURCE=simulated`).
 
 ### Instalación
 
@@ -81,9 +85,10 @@ En Linux/Mac: `cp .env.example .env`.
 
 | Variable | Default | Descripción |
 |---|---|---|
-| `YOUTUBE_API_KEY` | — | Clave de la API de YouTube (obligatoria) |
-| `TARGET_TYPE` | `video` | Tipo de objetivo |
-| `TARGET_ID` | — | ID del video, lo que sigue a `watch?v=` en la URL (obligatorio) |
+| `SOURCE` | `youtube` | `youtube` (comentarios reales) o `simulated` (comentarios falsos, sin API key) |
+| `YOUTUBE_API_KEY` | — | Clave de la API de YouTube (obligatoria con `SOURCE=youtube`) |
+| `TARGET_TYPE` | `video` | `video` o `channel` |
+| `TARGET_ID` | — | ID del video (lo que sigue a `watch?v=` en la URL) o del canal |
 | `POLL_INTERVAL` | `5` | Segundos entre consultas a YouTube |
 | `WINDOW_SECONDS` | `10` | Duración de cada ventana de análisis, en segundos |
 | `MAX_QUEUE` | `5000` | Tamaño máximo de las colas internas |

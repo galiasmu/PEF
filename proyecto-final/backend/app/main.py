@@ -1,30 +1,26 @@
 # backend/app/main.py
-import asyncio
 import re
 import time
 from collections import Counter
+from contextlib import aclosing
 
-import requests
 from fastapi import FastAPI, WebSocket
 from starlette.websockets import WebSocketDisconnect
 
 from .config import settings
+from .sources import build_source
 
 # ----------------- Configuración -----------------
-settings.require_youtube()
-
-API_KEY = settings.youtube_api_key
-TARGET_TYPE = settings.target_type
-VIDEO_ID = settings.target_id
-POLL_INTERVAL = settings.poll_interval_seconds
-WINDOW_SECONDS = settings.window_seconds
-MODEL_NAME = settings.model_name
+# Con la fuente de YouTube, el servidor no arranca si falta la API key.
+if settings.source == "youtube":
+    settings.require_youtube()
 
 # --------------- Sentimiento ---------------
 def build_sentiment():
     try:
         from transformers import pipeline
-        pipe = pipeline("text-classification", model=MODEL_NAME, tokenizer=MODEL_NAME, top_k=None)
+        model = settings.model_name
+        pipe = pipeline("text-classification", model=model, tokenizer=model, top_k=None)
         def _f(text: str):
             if not text:
                 return {"positive": 0.0, "neutral": 1.0, "negative": 0.0}
@@ -62,71 +58,38 @@ app = FastAPI()
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "video_id": VIDEO_ID}
+    return {"status": "ok", "source": settings.source, "target_id": settings.target_id}
 
 # ----------- Colector + Ventanas -----------
 async def collect_and_window(ws: WebSocket):
+    """Recorre la fuente de comentarios y cada WINDOW_SECONDS envía el resumen.
+
+    La fuente es un generador asíncrono que entrega un lote de comentarios
+    nuevos por consulta (puede venir vacío). ``aclosing`` garantiza que la
+    fuente se cierre (y con ella la conexión HTTP) cuando el cliente se va.
     """
-    Bucle que:
-      - hace poll a commentThreads orden=time (máx 50)
-      - acumula nuevos comments en buffer
-      - cada WINDOW_SECONDS envía payload agregado al WS (aunque esté vacío)
-    """
-    seen = set()
     buffer = []
     last_flush = time.monotonic()
 
-    while True:
-        # 1) poll youtube
-        try:
-            params = {
-                "part": "snippet",
-                "order": "time",
-                "maxResults": 50,
-                "videoId": VIDEO_ID,
-                "key": API_KEY,
-            }
-            r = requests.get(
-                "https://www.googleapis.com/youtube/v3/commentThreads",
-                params=params, timeout=15
-            )
-            if r.status_code == 200:
-                data = r.json()
-                for it in data.get("items", []):
-                    top = it.get("snippet", {}).get("topLevelComment", {})
-                    sn = top.get("snippet", {})
-                    cid = top.get("id") or it.get("id")
-                    if not cid or cid in seen:
-                        continue
-                    seen.add(cid)
-                    text = sn.get("textOriginal") or sn.get("textDisplay") or ""
-                    sent = analyze_sentiment(text)
-                    buffer.append({
-                        "id": cid,
-                        "text": text,
-                        "sentiment": sent
-                    })
-            else:
-                print("YouTube API error:", r.status_code, r.text[:200])
-        except Exception as e:
-            print("poll error:", repr(e))
+    async with aclosing(build_source()) as source:
+        async for new_comments in source:
+            for comment in new_comments:
+                comment["sentiment"] = analyze_sentiment(comment["text"])
+                buffer.append(comment)
 
-        # 2) flush de ventana cada WINDOW_SECONDS
-        now = time.monotonic()
-        if now - last_flush >= WINDOW_SECONDS:
-            payload = aggregate(buffer)
-            try:
-                await ws.send_json(payload)
-            except WebSocketDisconnect:
-                print("WS cliente desconectado")
-                break
-            except Exception as e:
-                print("WS send error:", repr(e))
-                break
-            buffer.clear()
-            last_flush = now
-
-        await asyncio.sleep(POLL_INTERVAL)
+            # flush de ventana cada WINDOW_SECONDS (aunque esté vacía)
+            now = time.monotonic()
+            if now - last_flush >= settings.window_seconds:
+                try:
+                    await ws.send_json(aggregate(buffer))
+                except WebSocketDisconnect:
+                    print("WS cliente desconectado")
+                    break
+                except Exception as e:
+                    print("WS send error:", repr(e))
+                    break
+                buffer.clear()
+                last_flush = now
 
 def aggregate(batch):
     total = len(batch)

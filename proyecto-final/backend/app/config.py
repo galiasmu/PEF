@@ -21,6 +21,7 @@ class Settings(BaseModel):
     # Permite el campo "model_name" (pydantic reserva el prefijo "model_").
     model_config = ConfigDict(protected_namespaces=())
 
+    source: str = os.getenv("SOURCE", "youtube").strip()  # "youtube" | "simulated"
     youtube_api_key: str = os.getenv("YOUTUBE_API_KEY", "").strip()
     target_type: str = os.getenv("TARGET_TYPE", "video").strip()  # "video" | "channel"
     target_id: str = os.getenv("TARGET_ID", "").strip()

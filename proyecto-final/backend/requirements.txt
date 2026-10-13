@@ -2,9 +2,8 @@
 fastapi==0.115.5
 uvicorn[standard]==0.32.0
 
-# Cliente HTTP (aiohttp: async; requests: el que usa hoy main.py)
+# Cliente HTTP asíncrono (consultas a la API de YouTube)
 aiohttp==3.10.10
-requests==2.34.2
 
 # Configuración
 pydantic==2.9.2
