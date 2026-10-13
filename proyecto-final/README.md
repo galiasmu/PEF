@@ -63,32 +63,33 @@ proyecto-final/
 cd proyecto-final/backend
 py -3.12 -m venv .venv
 .venv\Scripts\activate
-pip install -r requirements.txt requests
+pip install -r requirements.txt
 ```
 
 En Linux/Mac, activar el entorno con `source .venv/bin/activate`.
 
 ### Configuración
 
-Crear el archivo `backend/.env` (no se sube al repositorio):
+Copiar la plantilla `backend/.env.example` como `backend/.env` y completar la API key
+y el ID del video. El `.env` no se sube al repositorio.
 
-```
-YOUTUBE_API_KEY=tu_clave
-TARGET_TYPE=video
-TARGET_ID=id_del_video
-POLL_INTERVAL=5
-WINDOW_SECONDS=10
-SENTIMENT_MODEL=cardiffnlp/twitter-xlm-roberta-base-sentiment
+```bash
+copy .env.example .env
 ```
 
-| Variable | Descripción |
-|---|---|
-| `YOUTUBE_API_KEY` | Clave de la API de YouTube |
-| `TARGET_TYPE` | `video` |
-| `TARGET_ID` | ID del video (lo que sigue a `watch?v=` en la URL) |
-| `POLL_INTERVAL` | Segundos entre consultas a YouTube |
-| `WINDOW_SECONDS` | Duración de cada ventana de análisis |
-| `SENTIMENT_MODEL` | Modelo de Hugging Face para el sentimiento |
+En Linux/Mac: `cp .env.example .env`.
+
+| Variable | Default | Descripción |
+|---|---|---|
+| `YOUTUBE_API_KEY` | — | Clave de la API de YouTube (obligatoria) |
+| `TARGET_TYPE` | `video` | Tipo de objetivo |
+| `TARGET_ID` | — | ID del video, lo que sigue a `watch?v=` en la URL (obligatorio) |
+| `POLL_INTERVAL` | `5` | Segundos entre consultas a YouTube |
+| `WINDOW_SECONDS` | `10` | Duración de cada ventana de análisis, en segundos |
+| `MAX_QUEUE` | `5000` | Tamaño máximo de las colas internas |
+| `SENTIMENT_MODEL` | `cardiffnlp/twitter-xlm-roberta-base-sentiment` | Modelo de Hugging Face para el sentimiento |
+
+Toda la configuración se lee en un único lugar: `app/config.py`.
 
 ### Ejecución
 
@@ -102,7 +103,8 @@ Después abrir `ui-mini/index.html` en el navegador (o servirlo con `npx live-se
 
 ### Tests
 
+Desde `backend/`, con el entorno activado:
+
 ```bash
-cd proyecto-final/backend
-pytest -q
+pytest
 ```

@@ -1,26 +1,24 @@
 # backend/app/main.py
+import asyncio
+import re
+import time
+from collections import Counter
+
+import requests
 from fastapi import FastAPI, WebSocket
 from starlette.websockets import WebSocketDisconnect
-import os, time, asyncio, re
-from collections import Counter
-import requests
 
-# ----------------- .env -----------------
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except Exception:
-    pass
+from .config import settings
 
-API_KEY = os.getenv("YOUTUBE_API_KEY", "").strip()
-TARGET_TYPE = os.getenv("TARGET_TYPE", "video").strip()
-VIDEO_ID = os.getenv("TARGET_ID", "").strip()
-POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "5"))
-WINDOW_SECONDS = int(os.getenv("WINDOW_SECONDS", "5"))
-MODEL_NAME = os.getenv("SENTIMENT_MODEL", "cardiffnlp/twitter-xlm-roberta-base-sentiment")
+# ----------------- Configuración -----------------
+settings.require_youtube()
 
-if not API_KEY or not VIDEO_ID:
-    raise RuntimeError("Falta YOUTUBE_API_KEY o TARGET_ID en backend/.env")
+API_KEY = settings.youtube_api_key
+TARGET_TYPE = settings.target_type
+VIDEO_ID = settings.target_id
+POLL_INTERVAL = settings.poll_interval_seconds
+WINDOW_SECONDS = settings.window_seconds
+MODEL_NAME = settings.model_name
 
 # --------------- Sentimiento ---------------
 def build_sentiment():

@@ -1,7 +1,19 @@
+# Servidor web y WebSocket
 fastapi==0.115.5
 uvicorn[standard]==0.32.0
+
+# Cliente HTTP (aiohttp: async; requests: el que usa hoy main.py)
 aiohttp==3.10.10
+requests==2.34.2
+
+# Configuración
 pydantic==2.9.2
 python-dotenv==1.0.1
+
+# IA: modelo de análisis de sentimiento
 transformers==4.45.2
 torch>=2.3.0
+
+# Testing
+pytest==9.1.1
+pytest-asyncio==1.4.0
