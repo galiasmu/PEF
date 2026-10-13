@@ -3,11 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Bossio–Asmuzi Dashboard</title>
+  <title>YouTube Analytics — Dashboard</title>
   <style>
     body{font-family:system-ui,Roboto,Arial,sans-serif;margin:20px;background:#0b1220;color:#e6edf3}
     .card{background:#111a2b;border-radius:16px;padding:16px;box-shadow:0 2px 16px rgba(0,0,0,.25);margin-bottom:16px}
     h1{font-size:24px;margin:0 0 8px}
+    #status{font-size:14px;font-weight:normal;color:#8b949e;margin-left:8px}
+    .hint{color:#8b949e;font-size:13px;margin:-8px 0 8px}
     #chips span{display:inline-block;background:#1f2937;color:#c9d1d9;padding:6px 10px;border-radius:12px;margin:4px}
     .row{display:flex;gap:16px;flex-wrap:wrap}
     .col{flex:1 1 320px}
@@ -15,7 +17,7 @@
   </style>
 </head>
 <body>
-  <h1>YouTube Analytics</h1>
+  <h1>YouTube Analytics <span id="status">Conectando...</span></h1>
   <div class="row">
     <div class="col card">
       <h3>Comentarios por ventana</h3>
@@ -26,11 +28,18 @@
       <canvas id="chartSent" height="160"></canvas>
     </div>
   </div>
-  <div class="card">
-    <h3>Top Hashtags</h3>
-    <div id="chips"></div>
+  <div class="row">
+    <div class="col card">
+      <h3>Tendencias</h3>
+      <p class="hint">Hashtags más usados en el último minuto</p>
+      <canvas id="chartTrend" height="160"></canvas>
+    </div>
+    <div class="col card">
+      <h3>Hashtags de esta ventana</h3>
+      <div id="chips"></div>
+    </div>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

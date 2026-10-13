@@ -51,8 +51,10 @@ a YouTube y se usa el modelo una sola vez por ventana.
 5. Las **tendencias** (`app/trends.py`) funcionan como un cache con vencimiento (TTL): cada ventana suma
    sus hashtags y, pasados `TREND_SECONDS` segundos, se descuenta sola. Las ventanas vencen en el
    mismo orden en que entraron, así que alcanza con una `deque` (FIFO).
-6. El resumen se envía por **WebSocket** a todos los clientes (`app/main.py`), y el dashboard actualiza
-   los gráficos.
+6. El resumen se envía por **WebSocket** a todos los clientes (`app/main.py`), y el **dashboard**
+   (`ui-mini/`) actualiza los gráficos: comentarios por ventana, sentimiento promedio, tendencias y
+   hashtags de la ventana. Muestra solo las últimas 30 ventanas (la memoria del navegador no crece
+   sin límite) y, si el backend se reinicia, se reconecta solo.
 
 ## Estructura
 
@@ -129,7 +131,13 @@ uvicorn app.main:app --reload --port 8000
 
 La primera vez se descarga el modelo de sentimiento (~1 GB, queda guardado en la caché de Hugging Face).
 
-Después abrir `ui-mini/index.html` en el navegador (o servirlo con `npx live-server --port=8080`).
+Después abrir el dashboard: doble clic en `ui-mini/index.html`, o servirlo y entrar a
+`http://127.0.0.1:8080`:
+
+```bash
+cd proyecto-final/ui-mini
+python -m http.server 8080
+```
 
 ### Tests y estilo
 
