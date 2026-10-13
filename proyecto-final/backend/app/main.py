@@ -34,6 +34,17 @@ async def broadcast(message: dict) -> None:
             clients.discard(ws)
 
 
+def log_task_error(task: asyncio.Task) -> None:
+    """Si una tarea en segundo plano termina por un error, lo deja registrado en el log.
+
+    Sin esto, un error en el productor o en el pipeline lo detendría en silencio:
+    el dashboard seguiría "Conectado" pero sin recibir datos.
+    """
+    if not task.cancelled() and task.exception() is not None:
+        log.error("La tarea %s se detuvo por un error", task.get_name(),
+                  exc_info=task.exception())
+
+
 async def run_pipeline(analyzer: SentimentAnalyzer) -> None:
     """Procesa el stream de comentarios ventana por ventana, mientras el servidor esté vivo.
 
@@ -44,7 +55,8 @@ async def run_pipeline(analyzer: SentimentAnalyzer) -> None:
     queue = asyncio.Queue(maxsize=settings.max_queue)
     trends = TrendingHashtags(settings.trend_seconds)
     async with aclosing(build_source()) as source:
-        producer = asyncio.create_task(produce(source, queue))
+        producer = asyncio.create_task(produce(source, queue), name="productor")
+        producer.add_done_callback(log_task_error)
         try:
             async for window in time_windows(queue, settings.window_seconds):
                 texts = [comment["text"] for comment in window]
@@ -64,7 +76,8 @@ async def lifespan(app: FastAPI):
         settings.require_youtube()  # sin API key, el servidor no arranca
     analyzer = SentimentAnalyzer(load_model(settings.model_name))
     log.info("Pipeline iniciado (fuente: %s)", settings.source)
-    pipeline_task = asyncio.create_task(run_pipeline(analyzer))
+    pipeline_task = asyncio.create_task(run_pipeline(analyzer), name="pipeline")
+    pipeline_task.add_done_callback(log_task_error)
     yield
     pipeline_task.cancel()
     await asyncio.gather(pipeline_task, return_exceptions=True)

@@ -60,8 +60,12 @@ function showSummary(summary) {
 function connect() {
   const status = document.getElementById('status');
   const ws = new WebSocket(WS_URL);
-  ws.onopen = () => { status.textContent = 'Conectado'; };
-  ws.onmessage = (event) => showSummary(JSON.parse(event.data));
+  // El primer resumen llega recién cuando se cierra la primera ventana (WINDOW_SECONDS).
+  ws.onopen = () => { status.textContent = 'Conectado, esperando la primera ventana...'; };
+  ws.onmessage = (event) => {
+    status.textContent = 'Conectado';
+    showSummary(JSON.parse(event.data));
+  };
   ws.onclose = () => {
     status.textContent = 'Sin conexión, reintentando...';
     setTimeout(connect, 3000);  // si el backend se reinicia, el dashboard se reconecta solo

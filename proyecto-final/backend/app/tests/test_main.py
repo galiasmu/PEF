@@ -1,4 +1,6 @@
 """Tests del servidor: integración de punta a punta y reparto a los clientes."""
+import asyncio
+
 from fastapi.testclient import TestClient
 
 from app import main
@@ -47,3 +49,16 @@ async def test_broadcast_sends_to_all_and_drops_broken_clients(monkeypatch):
 
     assert ok.received == [{"total_comments": 1}]
     assert main.clients == {ok}       # el cliente caído se descartó
+
+
+async def test_background_task_errors_are_logged(caplog):
+    async def failing_task():
+        raise ValueError("la API cambió de formato")
+
+    task = asyncio.create_task(failing_task(), name="productor")
+    task.add_done_callback(main.log_task_error)
+    await asyncio.gather(task, return_exceptions=True)
+    await asyncio.sleep(0)  # deja correr el callback
+
+    assert "La tarea productor se detuvo por un error" in caplog.text
+    assert "la API cambió de formato" in caplog.text
